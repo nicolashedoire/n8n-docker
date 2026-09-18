@@ -1,0 +1,14 @@
+# Configuration locale et secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+# Données et sauvegardes : ne jamais les publier
+backups/
+.n8n/
+local-files/
+*.sqlite*
+*.db
+# macOS
+.DS_Store

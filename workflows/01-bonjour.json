@@ -1,0 +1,105 @@
+{
+  "name": "Mon premier workflow — Bonjour",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "194ed23a-22f7-4a7b-83af-2924b0d8f011",
+      "name": "Déclenchement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "prenom",
+              "value": "Nicolas",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "texte",
+              "value": "Mon premier workflow n8n fonctionne.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7c69586f-ac08-42e5-80b6-cd7d69553971",
+      "name": "Mes informations",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "message",
+              "value": "={{ 'Bonjour ' + $json.prenom + ' ! ' + $json.texte }}",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "statut",
+              "value": "Réussi",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c53b0098-bcb2-4f3a-a6ca-254311183409",
+      "name": "Mon message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        760,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Déclenchement manuel": {
+      "main": [
+        [
+          {
+            "node": "Mes informations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mes informations": {
+      "main": [
+        [
+          {
+            "node": "Mon message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "tags": []
+}
