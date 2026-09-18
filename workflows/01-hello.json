@@ -1,10 +1,10 @@
 {
-  "name": "Mon premier workflow — Bonjour",
+  "name": "My first workflow — Hello",
   "nodes": [
     {
       "parameters": {},
       "id": "194ed23a-22f7-4a7b-83af-2924b0d8f011",
-      "name": "Déclenchement manuel",
+      "name": "Manual trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
@@ -18,14 +18,14 @@
           "assignments": [
             {
               "id": "a1",
-              "name": "prenom",
+              "name": "firstName",
               "value": "Nicolas",
               "type": "string"
             },
             {
               "id": "a2",
-              "name": "texte",
-              "value": "Mon premier workflow n8n fonctionne.",
+              "name": "text",
+              "value": "My first n8n workflow works.",
               "type": "string"
             }
           ]
@@ -33,7 +33,7 @@
         "options": {}
       },
       "id": "7c69586f-ac08-42e5-80b6-cd7d69553971",
-      "name": "Mes informations",
+      "name": "My information",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
@@ -48,13 +48,13 @@
             {
               "id": "b1",
               "name": "message",
-              "value": "={{ 'Bonjour ' + $json.prenom + ' ! ' + $json.texte }}",
+              "value": "={{ 'Hello ' + $json.firstName + '! ' + $json.text }}",
               "type": "string"
             },
             {
               "id": "b2",
-              "name": "statut",
-              "value": "Réussi",
+              "name": "status",
+              "value": "Successful",
               "type": "string"
             }
           ]
@@ -62,7 +62,7 @@
         "options": {}
       },
       "id": "c53b0098-bcb2-4f3a-a6ca-254311183409",
-      "name": "Mon message",
+      "name": "My message",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
@@ -72,22 +72,22 @@
     }
   ],
   "connections": {
-    "Déclenchement manuel": {
+    "Manual trigger": {
       "main": [
         [
           {
-            "node": "Mes informations",
+            "node": "My information",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Mes informations": {
+    "My information": {
       "main": [
         [
           {
-            "node": "Mon message",
+            "node": "My message",
             "type": "main",
             "index": 0
           }

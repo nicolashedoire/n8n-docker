@@ -1,7 +1,7 @@
 name: n8n-desktop
 services:
   n8n:
-    # Image stable vérifiée le 18 septembre 2026, figée pour un résultat reproductible.
+    # Stable image verified on September 18, 2026; pinned for reproducibility.
     image: docker.n8n.io/n8nio/n8n@sha256:b73045abaddb40cb4024e86eea1b1f69093501a7339f685a4cd486b7743d23ae
     restart: unless-stopped
     ports:

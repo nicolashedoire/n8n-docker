@@ -1,53 +1,55 @@
-# n8n sur ton Mac avec Docker
+# n8n on your Mac with Docker
 
-Une installation locale de n8n **2.39.8**, un guide en français et un premier workflow prêt à importer.
+Run n8n **2.39.8** locally with persistent storage, an English getting-started guide, and a ready-to-import workflow.
 
-## Démarrer
+## Quick start
 
-1. Ouvre Docker Desktop.
-2. Double-clique sur **Demarrer.command** dans ce dossier.
-3. Ton navigateur ouvre **http://localhost:5678**.
-4. Au premier accès, crée ton compte propriétaire n8n avec ton adresse e-mail et un mot de passe. Ce compte appartient à ton installation locale ; aucun abonnement n8n Cloud n'est nécessaire pour cet exemple.
-5. Suis **[GUIDE-PREMIER-WORKFLOW.md](GUIDE-PREMIER-WORKFLOW.md)**.
+1. Open Docker Desktop.
+2. Double-click **Start.command** (Start) in this folder.
+3. Your browser opens **http://localhost:5678**.
+4. On your first visit, create your local n8n owner account with your email address and a password. You do not need an n8n Cloud subscription for this example.
+5. Follow **[Your first workflow](FIRST-WORKFLOW.md)**.
 
-Si macOS empêche le double-clic, utilise le Terminal :
+If macOS prevents launching the script by double-clicking, use Terminal:
 
 ```bash
 cd ~/Desktop/n8n-docker
-bash Demarrer.command
+bash Start.command
 ```
 
-## Contenu
+If you cloned this repository elsewhere, change to your clone's directory instead.
 
-- `compose.yaml` : n8n, stockage persistant et contrôle de disponibilité.
-- `Demarrer.command` / `Arreter.command` : lancement et arrêt sur macOS.
-- `GUIDE-PREMIER-WORKFLOW.md` : import rapide et création pas à pas.
-- `workflows/01-bonjour.json` : exemple sans service externe ni clé API.
-- `.env.example` : exemple de configuration facultative.
+## Files
 
-## Commandes utiles
+- `compose.yaml`: n8n, persistent storage, and a readiness check.
+- `Start.command` / `Stop.command`: start / stop launchers for macOS.
+- `FIRST-WORKFLOW.md`: quick import and a step-by-step tutorial.
+- `workflows/01-hello.json`: a sample with no external services or API keys.
+- `.env.example`: optional configuration template.
 
-À lancer dans le dossier du projet :
+## Useful commands
+
+Run these from the project directory:
 
 ```bash
-docker compose up -d --wait     # démarrer
-docker compose ps              # vérifier l'état
-docker compose logs --tail=80  # consulter les journaux
-docker compose stop            # arrêter sans perdre les données
-docker compose start           # relancer après un arrêt
+docker compose up -d --wait    # Start n8n
+docker compose ps             # Check container status
+docker compose logs --tail=80 # Read recent logs
+docker compose stop           # Stop without deleting data
+docker compose start          # Resume after stopping
 ```
 
-Le port est lié uniquement à `127.0.0.1` : cette installation est accessible depuis ton Mac. Un webhook appelé par un service Internet nécessite une configuration publique avec HTTPS ; ce projet est un environnement local pour apprendre.
+The published port binds only to `127.0.0.1`, so this instance is accessible from your Mac. Webhooks called by Internet services need a publicly reachable HTTPS setup; this project is a local learning environment.
 
-## Données et GitHub
+## Data and GitHub
 
-Les workflows enregistrés, le compte, les identifiants de connexion aux services et la clé de chiffrement restent dans le volume Docker `n8n-desktop_n8n_data`. Ils survivent aux arrêts et à la recréation du conteneur.
+Saved workflows, your account, service credentials, and the encryption key live in the Docker volume `n8n-desktop_n8n_data`. They survive container stops and recreation.
 
-**Ne lance pas `docker compose down -v` : l'option `-v` supprime le volume et les données.** Réinitialiser Docker Desktop peut aussi supprimer les volumes.
+**Do not run `docker compose down -v`: the `-v` option deletes the volume and its data.** Resetting Docker Desktop can also delete volumes.
 
-GitHub contient la configuration et l'exemple uniquement. Il n'est pas une sauvegarde de ton instance. Exporte tes workflows en JSON depuis l'éditeur pour les versionner, après vérification des données, URL privées, jetons et références aux identifiants qu'ils pourraient contenir. `.env` et `backups/` sont ignorés par Git.
+GitHub stores the configuration and sample workflow only. It is not a backup of your instance. To version your own workflows, export them as JSON from the editor and check for sensitive data, private URLs, tokens, and credential references before committing. Git ignores `.env` and `backups/`.
 
-Pour une sauvegarde complète (incluant la clé de chiffrement), exécute les commandes suivantes, en conservant le même Terminal :
+For a complete backup, including the encryption key, run the following commands in the same Terminal session:
 
 ```bash
 mkdir -p backups
@@ -57,29 +59,29 @@ docker compose stop n8n
 docker compose start n8n
 ```
 
-Vérifie que la commande de sauvegarde réussit. Si elle échoue, relance quand même `docker compose start n8n`. Conserve les archives dans un emplacement privé et sauvegardé : elles contiennent des données sensibles. Pour restaurer, arrête n8n, extrais l'archive dans un volume vide monté sur `/home/node/.n8n` en préservant les permissions, puis démarre avec la même version de n8n. Ne restaure pas par-dessus une base existante.
+Check that the backup command succeeds. If it fails, still run `docker compose start n8n` to bring the service back. Store backups in a private, backed-up location: they contain sensitive data. To restore, stop n8n, extract the archive into an empty volume mounted at `/home/node/.n8n`, preserving permissions, then start the same n8n version. Do not restore over an existing database.
 
-## Changer le port
+## Change the port
 
-Copie `.env.example` en `.env`, remplace `5678` par exemple par `5679`, puis relance `Demarrer.command`. Le lanceur ouvrira le bon port.
+Copy `.env.example` to `.env`, replace `5678` with another port such as `5679`, and run `Start.command` again. The launcher opens the configured port.
 
-## Mise à jour
+## Update n8n
 
-L'image est figée par son empreinte SHA-256 pour retrouver la version testée. Un simple `docker compose pull` ne change donc pas de version. Pour mettre à jour : sauvegarde le volume, consulte les notes de version officielles, remplace l'image de `compose.yaml` par une version stable précise (`docker.n8n.io/n8nio/n8n:VERSION`), puis lance `docker compose pull` et `docker compose up -d --wait`. Une migration de base peut empêcher de revenir à une ancienne version sans restaurer la sauvegarde.
+The image is pinned by its SHA-256 digest to reproduce the tested version. Running `docker compose pull` alone does not upgrade it. To upgrade, back up the volume, review the official release notes, replace the image in `compose.yaml` with a specific stable version (`docker.n8n.io/n8nio/n8n:VERSION`), then run `docker compose pull` and `docker compose up -d --wait`. Database migrations may prevent downgrading without restoring a backup.
 
-## Dépannage
+## Troubleshooting
 
-- **Docker inaccessible** : ouvre Docker Desktop et attends qu'il soit prêt.
-- **Port déjà utilisé** : change le port dans `.env` comme indiqué ci-dessus.
-- **Page indisponible** : regarde `docker compose ps` puis les journaux ; le premier démarrage applique les migrations.
-- **Compte demandé au premier accès** : c'est normal, termine la création du compte propriétaire.
-- **Workflow absent après clonage** : importe le JSON. Les workflows de ton instance ne sont pas synchronisés automatiquement avec GitHub.
-- **Exécution planifiée interrompue** : ton Mac doit rester allumé, éveillé, et Docker doit tourner.
+- **Cannot connect to Docker:** open Docker Desktop and wait until it is ready.
+- **Port already in use:** change the port in `.env` as described above.
+- **Page unavailable:** check `docker compose ps` and the logs; the first start applies database migrations.
+- **Account setup requested:** complete the initial owner account setup.
+- **Workflow missing after cloning:** import the JSON file. Instance workflows do not automatically sync with GitHub.
+- **Scheduled execution stops:** your Mac must stay on and awake, with Docker running.
 
-## Références
+## References
 
-- [Documentation officielle Docker Compose](https://github.com/n8n-io/n8n-docs/blob/main/docs/deploy/host-n8n/install-options/install-using-docker-compose.md)
-- [Documentation officielle n8n](https://docs.n8n.io/)
-- [Versions et notes de publication](https://github.com/n8n-io/n8n/releases)
+- [Official Docker Compose documentation](https://github.com/n8n-io/n8n-docs/blob/main/docs/deploy/host-n8n/install-options/install-using-docker-compose.md)
+- [Official n8n documentation](https://docs.n8n.io/)
+- [Releases and release notes](https://github.com/n8n-io/n8n/releases)
 
-Le projet utilise l'image officielle n8n. Les conditions de licence de n8n restent celles de son éditeur.
+This project uses the official n8n image. n8n remains subject to its publisher's license terms.

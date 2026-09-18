@@ -1,10 +1,10 @@
-# Configuration locale et secrets
+# Local configuration and secrets
 .env
 .env.*
 !.env.example
 *.key
 *.pem
-# Données et sauvegardes : ne jamais les publier
+# Data and backups: never publish these
 backups/
 .n8n/
 local-files/
