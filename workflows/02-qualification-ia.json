@@ -20,8 +20,8 @@
     },
     {
       "parameters": {
-        "content": "## 2 · Qualifier avec un vrai LLM\nOllama local : catégorie, résumé, informations manquantes et brouillon.\n\n3 tentatives HTTP maximum, délai de 1 s, timeout de 120 s. JSON parsé et contrôlé dans n8n, puis validé indépendamment par le serveur.",
-        "width": 1080,
+        "content": "## 2 · Extraire, vérifier, appliquer les règles\nLe modèle configuré propose une catégorie et six faits cités dans la demande. Preuve source : NFC, apostrophes courbes/droites, casse et espaces normalisés uniquement.\n\nLes règles métier calculent toutes les informations manquantes. Le brouillon utilise uniquement des gabarits de réponse côté prestataire. Le serveur recalcule la même politique avant stockage.",
+        "width": 1640,
         "height": 240,
         "color": 6
       },
@@ -46,7 +46,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1640,
+        2200,
         -420
       ]
     },
@@ -62,7 +62,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1910,
+        2470,
         650
       ]
     },
@@ -316,8 +316,8 @@
           }
         }
       },
-      "id": "bb7802bb7f0690f067d420ba68e0d0f4",
-      "name": "Qualifier avec Ollama",
+      "id": "ca5b3cde417e8b81c57c5895ba3df42b",
+      "name": "Extraire les faits avec IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
@@ -331,10 +331,10 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst response = $input.first().json;\nconst reservation = $('Réserver sans doublon').first().json;\nconst out = { attempt_token: reservation.attempt_token, metrics: response.metrics ?? {} };\ntry {\n  if (typeof response.text !== 'string') throw new Error('Le modèle doit retourner un texte JSON.');\n  const analysis = JSON.parse(response.text);\n  const keys = ['category', 'summary', 'missing_information', 'draft_reply'];\n  if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis) || Object.keys(analysis).sort().join('|') !== keys.sort().join('|')) throw new Error('Champs JSON inattendus ou absents.');\n  if (!['devis', 'rendez_vous', 'support', 'autre'].includes(analysis.category)) throw new Error('Catégorie invalide.');\n  if (typeof analysis.summary !== 'string' || !analysis.summary.trim() || analysis.summary.length > 2000) throw new Error('Résumé invalide.');\n  if (!Array.isArray(analysis.missing_information) || analysis.missing_information.length > 20 || !analysis.missing_information.every(x => typeof x === 'string' && x.trim() && x.length <= 300)) throw new Error('Informations manquantes invalides.');\n  if (typeof analysis.draft_reply !== 'string' || !analysis.draft_reply.trim() || analysis.draft_reply.length > 5000) throw new Error('Brouillon invalide.');\n  out.analysis = analysis;\n} catch (error) {\n  out.error = { code: 'INVALID_LLM_OUTPUT', message: error instanceof SyntaxError ? 'Le modèle a produit un JSON invalide.' : error.message };\n}\nreturn [{json:out}];"
+        "jsCode": "\nfunction validateExtraction(input, source) {\n  const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);\n  const exactKeys = (value, keys) => object(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));\n  const canonical = value => value.normalize('NFC').replace(/[‘’]/gu, \"'\").replace(/\\s+/gu, ' ').trim().toLowerCase();\n  const fields = ['need', 'budget', 'deadline', 'availability', 'product', 'problem'];\n  if (typeof source !== 'string' || !source.trim()) throw new Error('Message source absent.');\n  if (!exactKeys(input, ['category', 'facts'])) throw new Error('Extraction : champs inattendus ou absents.');\n  if (!['devis', 'rendez_vous', 'support', 'autre'].includes(input.category)) throw new Error('Extraction : catégorie invalide.');\n  if (!exactKeys(input.facts, fields)) throw new Error('Extraction : les six faits sont requis.');\n  const message = canonical(source);\n  const facts = {};\n  for (const key of fields) {\n    const value = input.facts[key];\n    if (typeof value !== 'string' || value.length > 300) throw new Error(`Extraction : fait ${key} invalide.`);\n    const normalized = value.normalize('NFC').replace(/\\s+/gu, ' ').trim();\n    if (value !== '' && !normalized) throw new Error(`Extraction : fait ${key} vide non canonique.`);\n    if (normalized && !message.includes(canonical(normalized))) throw new Error(`Extraction : fait ${key} non attesté dans le message.`);\n    facts[key] = normalized;\n  }\n  return { category: input.category, facts };\n}\nconst response = $input.first().json;\nconst reservation = $('Réserver sans doublon').first().json;\nconst out = { attempt_token: reservation.attempt_token, metrics: { ...(response.metrics ?? {}), qualification_version: 'facts-v2', draft_method: 'template' } };\ntry {\n  if (typeof response.text !== 'string') throw new Error('Le modèle doit retourner un texte JSON.');\n  out.extraction = validateExtraction(JSON.parse(response.text), $('Normaliser la demande').first().json.input.message);\n} catch (error) {\n  out.error = { code: 'INVALID_LLM_OUTPUT', message: error instanceof SyntaxError ? 'Le modèle a produit un JSON invalide.' : error.message };\n}\nreturn [{json:out}];"
       },
-      "id": "b4b6e5e623a024b19c4ef4e7edfde537",
-      "name": "Valider le JSON du modèle",
+      "id": "5542e66672c4b9cda812fee1d9ecff5c",
+      "name": "Valider les faits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -344,7 +344,33 @@
     },
     {
       "parameters": {
-        "jsCode": "\nreturn [{json:{attempt_token:$('Réserver sans doublon').first().json.attempt_token,error:{code:'LLM_UNAVAILABLE',message:'Appel IA en échec après les tentatives bornées. Revue humaine nécessaire.'},metrics:{scenario:$('Normaliser la demande').first().json.input.scenario}}}];"
+        "jsCode": "\nfunction applyQualificationRules(extraction) {\n  const requiredByCategory = {\n    devis: ['need', 'budget', 'deadline'],\n    rendez_vous: ['need', 'availability'],\n    support: ['product', 'problem'],\n    autre: ['need'],\n  };\n  const required = requiredByCategory[extraction?.category];\n  const fields = ['need', 'budget', 'deadline', 'availability', 'product', 'problem'];\n  if (!required || !extraction.facts || fields.some(key => typeof extraction.facts[key] !== 'string')) throw new Error('Extraction validée requise pour la qualification.');\n  const facts = Object.fromEntries(fields.map(key => [key, extraction.facts[key]]));\n  // Deliberately finite list of exact generic phrases. This is not a semantic classifier.\n  // New vague expressions must be evaluated in the corpus, not guessed by a broad regex.\n  const genericNeeds = new Set([\n    'automatiser mon entreprise', 'automatisation de mon entreprise',\n    'automatiser notre entreprise', 'automatisation de notre entreprise',\n    'automatiser mon activité', 'automatiser notre activité',\n    'mon entreprise', 'notre entreprise', 'mon activité', 'notre activité',\n    'un devis', 'devis', 'des renseignements', 'renseignements',\n    'des informations', 'informations', 'aide', 'bonjour',\n  ]);\n  const needKey = facts.need.replace(/\\s+/gu, ' ').trim().toLowerCase().replace(/[.!?]+$/u, '');\n  const ignored_generic_need = genericNeeds.has(needKey);\n  if (ignored_generic_need) facts.need = '';\n  const labels = {\n    need: extraction.category === 'rendez_vous' ? 'Le sujet du rendez-vous' : 'Le besoin ou le périmètre précis',\n    budget: 'Le budget disponible', deadline: 'L’échéance souhaitée',\n    availability: 'Les disponibilités pour le rendez-vous',\n    product: 'Le produit ou service concerné', problem: 'La description du problème',\n  };\n  const missing_fields = required.filter(key => facts[key] === '');\n  return {\n    category: extraction.category, facts, required_fields: [...required], missing_fields,\n    missing_information: missing_fields.map(key => labels[key]), ignored_generic_need,\n  };\n}\nconst out = $input.first().json;\nif (!out.error) {\n  try { out.qualification = applyQualificationRules(out.extraction); }\n  catch (error) { out.error = {code:'QUALIFICATION_POLICY_ERROR',message:error.message}; }\n}\nreturn [{json:out}];"
+      },
+      "id": "737d9e1316823fc291f750e5cabd05f6",
+      "name": "Appliquer les règles de qualification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction composeAnalysis(qualification) {\n  const categories = {\n    devis: { summary: 'Demande de devis', acknowledgement: 'votre demande de devis' },\n    rendez_vous: { summary: 'Demande de rendez-vous', acknowledgement: 'votre demande de rendez-vous' },\n    support: { summary: 'Demande de support', acknowledgement: 'votre demande de support' },\n    autre: { summary: 'Demande à examiner', acknowledgement: 'votre demande' },\n  };\n  const category = categories[qualification?.category];\n  if (!category || !Array.isArray(qualification.required_fields) || !Array.isArray(qualification.missing_fields) || !Array.isArray(qualification.missing_information)) throw new Error('Qualification structurée requise pour le brouillon.');\n  const labels = {\n    need: qualification.category === 'rendez_vous' ? 'Sujet' : 'Besoin',\n    budget: 'Budget', deadline: 'Échéance', availability: 'Disponibilités', product: 'Produit ou service', problem: 'Problème',\n  };\n  const questions = {\n    need: qualification.category === 'rendez_vous'\n      ? 'Quel sujet souhaitez-vous aborder lors du rendez-vous ?'\n      : qualification.category === 'autre'\n        ? 'Pouvez-vous préciser l’objet de votre demande ?'\n        : 'Pouvez-vous préciser le besoin et le périmètre attendus ?',\n    budget: 'Quel budget souhaitez-vous consacrer à ce projet ?',\n    deadline: 'À quelle échéance souhaitez-vous aboutir ?',\n    availability: 'Quelles sont vos disponibilités pour ce rendez-vous ?',\n    product: 'Quel produit ou service est concerné ?',\n    problem: 'Quel problème rencontrez-vous ?',\n  };\n  if (qualification.missing_fields.some(key => !Object.hasOwn(questions, key))) throw new Error('Code de précision inconnu.');\n  const observed = qualification.required_fields.filter(key => qualification.facts[key] !== '')\n    .map(key => `${labels[key]} : « ${qualification.facts[key]} ».`);\n  const missing = qualification.missing_information.length\n    ? ` Informations à préciser : ${qualification.missing_information.join(' ; ')}.` : '';\n  const summary = `${category.summary}.${observed.length ? ' ' + observed.join(' ') : ''}${missing}`;\n  // Only fixed provider-language templates enter the draft: never quote model/source text.\n  const draft_reply = qualification.missing_fields.length\n    ? `Bonjour,\\n\\nMerci pour ${category.acknowledgement}. Pour pouvoir l’étudier, nous avons besoin des précisions suivantes :\\n\\n${qualification.missing_fields.map(key => '- ' + questions[key]).join('\\n')}\\n\\nCes précisions permettront d’examiner votre demande.\\n\\nCordialement.`\n    : `Bonjour,\\n\\nNous avons bien reçu ${category.acknowledgement}. Les éléments transmis permettent d’étudier votre demande. Nous reviendrons vers vous après examen.\\n\\nCordialement.`;\n  return { category: qualification.category, summary, missing_information: [...qualification.missing_information], draft_reply };\n}\nconst input = $input.first().json;\nconst out = {attempt_token:input.attempt_token,metrics:input.metrics};\nif (input.extraction) out.extraction = input.extraction;\nif (input.error) out.error = input.error;\nelse {\n  try { out.analysis = composeAnalysis(input.qualification); }\n  catch (error) { out.error = {code:'DRAFT_POLICY_ERROR',message:error.message}; }\n}\nreturn [{json:out}];"
+      },
+      "id": "c9d2dedf8099d02b00606df789d0d04c",
+      "name": "Composer le brouillon",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn [{json:{attempt_token:$('Réserver sans doublon').first().json.attempt_token,error:{code:'LLM_UNAVAILABLE',message:'Appel IA en échec après les tentatives bornées. Revue humaine nécessaire.'},metrics:{qualification_version:'facts-v2',draft_method:'template'}}}];"
       },
       "id": "9eb87b35dce0c4e73d7e65af420077d9",
       "name": "Contenir la panne IA",
@@ -376,7 +402,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1340,
+        1900,
         80
       ],
       "onError": "continueErrorOutput"
@@ -390,7 +416,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1340,
+        1900,
         470
       ]
     },
@@ -403,7 +429,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1630,
+        2190,
         80
       ]
     },
@@ -437,7 +463,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1890,
+        2450,
         80
       ]
     },
@@ -618,7 +644,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2150,
+        2710,
         -20
       ],
       "disabled": true,
@@ -648,7 +674,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2420,
+        2980,
         -40
       ],
       "onError": "continueErrorOutput"
@@ -674,7 +700,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2420,
+        2980,
         260
       ],
       "onError": "continueErrorOutput"
@@ -700,7 +726,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2140,
+        2700,
         450
       ],
       "onError": "continueErrorOutput"
@@ -714,7 +740,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2420,
+        2980,
         560
       ]
     },
@@ -727,7 +753,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2720,
+        3280,
         80
       ]
     },
@@ -740,7 +766,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2710,
+        3270,
         430
       ]
     }
@@ -819,7 +845,7 @@
       "main": [
         [
           {
-            "node": "Qualifier avec Ollama",
+            "node": "Extraire les faits avec IA",
             "type": "main",
             "index": 0
           }
@@ -833,11 +859,11 @@
         ]
       ]
     },
-    "Qualifier avec Ollama": {
+    "Extraire les faits avec IA": {
       "main": [
         [
           {
-            "node": "Valider le JSON du modèle",
+            "node": "Valider les faits",
             "type": "main",
             "index": 0
           }
@@ -851,7 +877,29 @@
         ]
       ]
     },
-    "Valider le JSON du modèle": {
+    "Valider les faits": {
+      "main": [
+        [
+          {
+            "node": "Appliquer les règles de qualification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appliquer les règles de qualification": {
+      "main": [
+        [
+          {
+            "node": "Composer le brouillon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Composer le brouillon": {
       "main": [
         [
           {

@@ -11,6 +11,8 @@ import { randomBytes } from 'node:crypto';
 const webhook = process.env.WORKFLOW_TEST_WEBHOOK_URL ?? 'http://127.0.0.1:5678/webhook/atelier-qualification';
 const api = (process.env.WORKFLOW_TEST_API_URL ?? 'http://127.0.0.1:8787').replace(/\/$/, '');
 const requireSheets = process.env.WORKFLOW_TEST_REQUIRE_SHEETS === '1';
+const expectedProvider = process.env.EXPECTED_PROVIDER?.trim() || null;
+assert(expectedProvider === null || ['ollama', 'openai'].includes(expectedProvider), 'EXPECTED_PROVIDER must be ollama or openai.');
 const allCases = ['invalidinput', 'invalidjson', 'apierror', 'nominal', 'ambiguous', 'duplicate', 'injection'];
 const selected = process.argv.find(arg => arg.startsWith('--cases='))?.slice('--cases='.length).split(',') ?? allCases;
 assert(selected.length && selected.every(name => allCases.includes(name)), `Cases: ${allCases.join(',')}`);
@@ -42,6 +44,11 @@ function assertSink(record) {
   assert(['synced', 'skipped', 'failed'].includes(record.sink_status), 'Synchronization outcome must be explicit.');
   if (requireSheets) assert.equal(record.sink_status, 'synced', 'Google Sheets synchronization is required for this run.');
 }
+function assertRealProvider(record) {
+  assert(['ollama', 'openai'].includes(record.metrics?.provider), 'Qualification must use a supported real provider, not fault injection.');
+  if (expectedProvider) assert.equal(record.metrics.provider, expectedProvider, 'The executed provider must match EXPECTED_PROVIDER.');
+  assert(typeof record.metrics?.model === 'string' && record.metrics.model.trim(), 'The executed model must be reported.');
+}
 async function submit(payload) {
   const result = await request(webhook, payload);
   assert.equal(result.status, 200, 'Published webhook must return HTTP 200.');
@@ -55,7 +62,7 @@ async function runNominal() {
   assert.equal(record.status, 'pending_review', 'A complete request should await human review.');
   assert.equal(record.analysis.category, 'devis');
   assert.equal(record.analysis.missing_information.length, 0, 'The supplied scope, budget and deadline should be recognized.');
-  assert.equal(record.metrics.provider, 'ollama', 'Normal qualification must use the real local model.');
+  assertRealProvider(record);
   assert(record.analysis.summary.trim() && record.analysis.draft_reply.trim());
   assert.equal(record.events.filter(e => e.kind === 'result_stored').length, 1);
   assert.equal(record.events.some(e => e.kind === 'human_decision'), false);
@@ -94,7 +101,7 @@ const cases = {
     assert.equal(record.status, 'needs_info', 'An ambiguous request should ask for missing information.');
     assert.equal(record.analysis.category, 'devis');
     assert(record.analysis.missing_information.length > 0);
-    assert.equal(record.metrics.provider, 'ollama');
+    assertRealProvider(record);
     return record;
   },
   async duplicate() {
@@ -123,23 +130,24 @@ const cases = {
     } else {
       assert.equal(record.status, 'technical_error', 'A rejected model output must remain a visible technical error.');
     }
-    assert.equal(record.metrics.provider, 'ollama', 'This case must exercise the real model.');
+    assertRealProvider(record);
     return record;
   },
 };
 
 if (process.argv.includes('--dry-run')) {
-  console.log(JSON.stringify({ mode: 'dry_run', cases: selected, prefix, requireSheets, note: 'Aucun appel réseau. nominal, ambiguous et injection utiliseront réellement Ollama ; les deux pannes sont injectées.' }, null, 2));
+  console.log(JSON.stringify({ mode: 'dry_run', cases: selected, prefix, requireSheets, expected_provider: expectedProvider, note: 'Aucun appel réseau. nominal, ambiguous et injection utiliseront réellement le fournisseur configuré ; les deux pannes sont injectées. EXPECTED_PROVIDER=ollama|openai permet d’imposer le fournisseur.' }, null, 2));
 } else {
   const health = await request(`${api}/health`);
   assert.equal(health.status, 200, 'The local qualification service must be running.');
+  if (expectedProvider && health.data.provider) assert.equal(health.data.provider, expectedProvider, 'The service must be configured for EXPECTED_PROVIDER before testing.');
   console.log(`Vérification séquentielle ${prefix} ; les dossiers fictifs restent dans le suivi.`);
   for (const name of selected) {
     const start = Date.now();
-    console.log(`DEBUT ${name}${['nominal', 'ambiguous', 'injection'].includes(name) ? ' (Ollama réel)' : ''}`);
+    console.log(`DEBUT ${name}${['nominal', 'ambiguous', 'injection'].includes(name) ? ' (fournisseur configuré réel)' : ''}`);
     try {
       const record = await cases[name]();
-      const result = { case: name, passed: true, status: record.status, sink: record.sink_status ?? null, duration_ms: Date.now() - start, ...(name === 'injection' ? { verification_scope: 'state_and_schema_only', manual_draft_review_required: true } : {}) };
+      const result = { case: name, passed: true, status: record.status, provider: record.metrics?.provider ?? null, model: record.metrics?.model ?? null, sink: record.sink_status ?? null, duration_ms: Date.now() - start, ...(name === 'injection' ? { verification_scope: 'state_and_schema_only', manual_draft_review_required: true } : {}) };
       results.push(result); console.log(JSON.stringify(result));
     } catch (error) {
       // Assertion messages are fixed explanations. Never print payloads, tokens, drafts or HTTP bodies.
@@ -148,6 +156,6 @@ if (process.argv.includes('--dry-run')) {
     }
   }
   const passed = results.every(result => result.passed);
-  console.log(JSON.stringify({ passed, prefix, results, requireSheets, limitations: 'Ces cas fictifs vérifient ce workflow et cette exécution. Ils ne constituent pas un benchmark général du modèle ; synced reflète le retour du nœud Sheets, pas une relecture indépendante du tableur.' }, null, 2));
+  console.log(JSON.stringify({ passed, prefix, results, requireSheets, expected_provider: expectedProvider, limitations: 'Ces cas fictifs vérifient ce workflow et cette exécution. Ils ne constituent pas un benchmark général du modèle ; synced reflète le retour du nœud Sheets, pas une relecture indépendante du tableur.' }, null, 2));
   process.exitCode = passed ? 0 : 1;
 }

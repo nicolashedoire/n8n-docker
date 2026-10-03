@@ -16,3 +16,4 @@ local-files/
 runtime/
 *.log
 __pycache__/
+work/

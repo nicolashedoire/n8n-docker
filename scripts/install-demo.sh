@@ -33,7 +33,8 @@ fi
 if [ ! -f "$TASK_WORKFLOW" ]; then echo "Workflow introuvable : $TASK_WORKFLOW" >&2; exit 1; fi
 
 ./scripts/start-demo.sh --no-open
-TASK_COMPOSE=(docker compose -f compose.yaml -f compose.demo.yaml)
+source "$TASK_ROOT/scripts/demo-compose.sh"
+build_demo_compose "$TASK_ROOT"
 TASK_ID=atelierQualificationIA01
 TASK_REMOTE_INPUT="/tmp/atelier-install-$$.json"
 TASK_REMOTE_BACKUP="/tmp/atelier-backup-$$.json"

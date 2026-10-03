@@ -10,12 +10,11 @@ for TASK_ARG in "$@"; do
     --no-open) TASK_OPEN=0 ;;
     -h|--help)
       echo "Usage: scripts/start-demo.sh [--no-open]"
-      echo "Démarre Docker, Ollama local et les services existants, sans réimporter le workflow."
+      echo "Démarre Docker et le fournisseur configuré, sans réimporter le workflow."
       exit 0 ;;
     *) echo "Option inconnue : $TASK_ARG" >&2; exit 2 ;;
   esac
 done
-TASK_COMPOSE=(docker compose -f compose.yaml -f compose.demo.yaml)
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker Desktop est requis : https://www.docker.com/products/docker-desktop/" >&2
@@ -24,6 +23,17 @@ fi
 if ! docker compose version >/dev/null 2>&1; then
   echo "Docker Compose v2 est requis. Mettre à jour Docker Desktop." >&2
   exit 1
+fi
+# This trusted helper delegates dotenv parsing to Compose, never to shell source.
+source "$TASK_ROOT/scripts/demo-compose.sh"
+build_demo_compose "$TASK_ROOT"
+if [ "$TASK_LLM_PROVIDER" = openai ]; then
+  if [ ! -f "$TASK_ROOT/local-files/openai-api-key" ] || \
+     [ ! -r "$TASK_ROOT/local-files/openai-api-key" ] || \
+     [ ! -s "$TASK_ROOT/local-files/openai-api-key" ]; then
+    echo "Clé OpenAI locale absente, vide ou illisible. Utiliser scripts/configure-openai.sh." >&2
+    exit 1
+  fi
 fi
 if ! docker info >/dev/null 2>&1; then
   if command -v open >/dev/null 2>&1; then open -a Docker; fi
@@ -38,6 +48,7 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
   fi
 fi
+if [ "$TASK_LLM_PROVIDER" = ollama ]; then
 if ! command -v curl >/dev/null 2>&1; then echo "curl est requis." >&2; exit 1; fi
 TASK_OLLAMA_BIN="$(command -v ollama || true)"
 if [ -z "$TASK_OLLAMA_BIN" ] && [ -x /Applications/Ollama.app/Contents/Resources/ollama ]; then
@@ -70,6 +81,9 @@ fi
 if ! "$TASK_OLLAMA_BIN" show qwen2.5:3b >/dev/null 2>&1; then
   echo "Téléchargement initial du modèle local qwen2.5:3b (environ 1,9 Go)…"
   "$TASK_OLLAMA_BIN" pull qwen2.5:3b
+fi
+else
+  echo "Fournisseur OpenAI sélectionné ; clé locale montée en lecture seule."
 fi
 
 echo "Démarrage des services n8n et du tableau de relecture…"

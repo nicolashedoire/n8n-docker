@@ -1,5 +1,5 @@
 # Adds the interview demo to the existing local n8n instance.
-# docker compose -f compose.yaml -f compose.demo.yaml up -d qualification-api
+# bash scripts/demo-compose.sh up -d qualification-api
 services:
   qualification-api:
     image: node:22-bookworm-slim
@@ -12,6 +12,8 @@ services:
       PORT: "3000"
       HOST: "0.0.0.0"
       DATABASE_PATH: /data/qualification.sqlite
+      LLM_PROVIDER: "${LLM_PROVIDER:-ollama}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-5.6-terra}"
       OLLAMA_URL: http://host.docker.internal:11434
       OLLAMA_MODEL: qwen2.5:3b
       N8N_WEBHOOK_URL: http://n8n:5678/webhook/atelier-qualification

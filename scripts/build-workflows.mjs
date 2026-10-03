@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateExtraction, applyQualificationRules, composeAnalysis } from '../demo/qualification-policy.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const api = 'http://qualification-api:3000';
@@ -44,8 +45,8 @@ export function buildWorkflow({ documentId = '', credentialId = '', sheetName = 
 
   note('01 · Entrées', [-540, -420], 1030, 240,
     '## 1 · Recevoir et réserver\nFormulaire natif ou webhook de test → normalisation → validation côté API.\n\nUne réservation persistante identifie la demande. Un rejeu terminé reprend le résultat existant : aucun nouvel appel au modèle.', 5);
-  note('02 · Qualification', [520, -420], 1080, 240,
-    '## 2 · Qualifier avec un vrai LLM\nOllama local : catégorie, résumé, informations manquantes et brouillon.\n\n3 tentatives HTTP maximum, délai de 1 s, timeout de 120 s. JSON parsé et contrôlé dans n8n, puis validé indépendamment par le serveur.', 6);
+  note('02 · Qualification', [520, -420], 1640, 240,
+    '## 2 · Extraire, vérifier, appliquer les règles\nLe modèle configuré propose une catégorie et six faits cités dans la demande. Preuve source : NFC, apostrophes courbes/droites, casse et espaces normalisés uniquement.\n\nLes règles métier calculent toutes les informations manquantes. Le brouillon utilise uniquement des gabarits de réponse côté prestataire. Le serveur recalcule la même politique avant stockage.', 6);
   note('03 · Suivi humain', [1640, -420], 1330, 240,
     '## 3 · Conserver et présenter\nLe serveur conserve le résultat avant la synchronisation Google Sheets.\n\nLe brouillon attend toujours une lecture humaine. Informations manquantes → `needs_info`. Erreur technique → `technical_error`. Aucun envoi automatique.', 4);
   note('Configuration Google Sheets', [1910, 650], 850, 280,
@@ -96,30 +97,43 @@ const response = $input.first().json;
 return [{json:{ok:true,route:'duplicate',request_id:response.request_id,record:response.record,message:'Demande déjà reçue : résultat existant, sans nouvel appel IA.'}}];`);
   code('Réservation refusée', [250, 620], `return [{json:{ok:false,status:'reservation_error',message:'Réservation impossible. Vérifier les données et la disponibilité du service ; aucune qualification lancée.'}}];`);
 
-  const llm = http('Qualifier avec Ollama', [780, 0], `${api}/llm`,
+  const llm = http('Extraire les faits avec IA', [780, 0], `${api}/llm`,
     '={{ { message: $("Normaliser la demande").first().json.input.message, scenario: $("Normaliser la demande").first().json.input.scenario } }}',
     { retryOnFail: true, maxTries: 3, waitBetweenTries: 1000 });
   llm.parameters.options.timeout = 120000;
-  code('Valider le JSON du modèle', [1050, -20], `
+  code('Valider les faits', [1050, -20], `
+${validateExtraction.toString()}
 const response = $input.first().json;
 const reservation = $('Réserver sans doublon').first().json;
-const out = { attempt_token: reservation.attempt_token, metrics: response.metrics ?? {} };
+const out = { attempt_token: reservation.attempt_token, metrics: { ...(response.metrics ?? {}), qualification_version: 'facts-v2', draft_method: 'template' } };
 try {
   if (typeof response.text !== 'string') throw new Error('Le modèle doit retourner un texte JSON.');
-  const analysis = JSON.parse(response.text);
-  const keys = ['category', 'summary', 'missing_information', 'draft_reply'];
-  if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis) || Object.keys(analysis).sort().join('|') !== keys.sort().join('|')) throw new Error('Champs JSON inattendus ou absents.');
-  if (!['devis', 'rendez_vous', 'support', 'autre'].includes(analysis.category)) throw new Error('Catégorie invalide.');
-  if (typeof analysis.summary !== 'string' || !analysis.summary.trim() || analysis.summary.length > 2000) throw new Error('Résumé invalide.');
-  if (!Array.isArray(analysis.missing_information) || analysis.missing_information.length > 20 || !analysis.missing_information.every(x => typeof x === 'string' && x.trim() && x.length <= 300)) throw new Error('Informations manquantes invalides.');
-  if (typeof analysis.draft_reply !== 'string' || !analysis.draft_reply.trim() || analysis.draft_reply.length > 5000) throw new Error('Brouillon invalide.');
-  out.analysis = analysis;
+  out.extraction = validateExtraction(JSON.parse(response.text), $('Normaliser la demande').first().json.input.message);
 } catch (error) {
   out.error = { code: 'INVALID_LLM_OUTPUT', message: error instanceof SyntaxError ? 'Le modèle a produit un JSON invalide.' : error.message };
 }
 return [{json:out}];`);
+  code('Appliquer les règles de qualification', [1320, -20], `
+${applyQualificationRules.toString()}
+const out = $input.first().json;
+if (!out.error) {
+  try { out.qualification = applyQualificationRules(out.extraction); }
+  catch (error) { out.error = {code:'QUALIFICATION_POLICY_ERROR',message:error.message}; }
+}
+return [{json:out}];`);
+  code('Composer le brouillon', [1580, -20], `
+${composeAnalysis.toString()}
+const input = $input.first().json;
+const out = {attempt_token:input.attempt_token,metrics:input.metrics};
+if (input.extraction) out.extraction = input.extraction;
+if (input.error) out.error = input.error;
+else {
+  try { out.analysis = composeAnalysis(input.qualification); }
+  catch (error) { out.error = {code:'DRAFT_POLICY_ERROR',message:error.message}; }
+}
+return [{json:out}];`);
   code('Contenir la panne IA', [1050, 260], `
-return [{json:{attempt_token:$('Réserver sans doublon').first().json.attempt_token,error:{code:'LLM_UNAVAILABLE',message:'Appel IA en échec après les tentatives bornées. Revue humaine nécessaire.'},metrics:{scenario:$('Normaliser la demande').first().json.input.scenario}}}];`);
+return [{json:{attempt_token:$('Réserver sans doublon').first().json.attempt_token,error:{code:'LLM_UNAVAILABLE',message:'Appel IA en échec après les tentatives bornées. Revue humaine nécessaire.'},metrics:{qualification_version:'facts-v2',draft_method:'template'}}}];`);
   http('Enregistrer le résultat', [1340, 80], `={{ '${api}/requests/' + encodeURIComponent($('Réserver sans doublon').first().json.request_id) + '/result' }}`, '={{ $json }}');
   code('Persistance à vérifier', [1340, 470], `return [{json:{ok:false,status:'persistence_error',request_id:$('Réserver sans doublon').first().json.request_id,message:'Le résultat ne peut pas être confirmé. Consulter le service avant une nouvelle tentative.'}}];`);
   code('Préparer le suivi', [1630, 80], `
@@ -168,9 +182,11 @@ return [{json:{ok:false,status:'sink_tracking_error',record:$('Préparer le suiv
   connect('Normaliser la demande', 'Entrée valide ?');
   connect('Entrée valide ?', 'Réserver sans doublon'); connect('Entrée valide ?', 'Entrée à corriger', 1);
   connect('Réserver sans doublon', 'Nouvelle tentative ?'); connect('Réserver sans doublon', 'Réservation refusée', 1);
-  connect('Nouvelle tentative ?', 'Qualifier avec Ollama'); connect('Nouvelle tentative ?', 'Résultat déjà disponible', 1);
-  connect('Qualifier avec Ollama', 'Valider le JSON du modèle'); connect('Qualifier avec Ollama', 'Contenir la panne IA', 1);
-  connect('Valider le JSON du modèle', 'Enregistrer le résultat'); connect('Contenir la panne IA', 'Enregistrer le résultat');
+  connect('Nouvelle tentative ?', 'Extraire les faits avec IA'); connect('Nouvelle tentative ?', 'Résultat déjà disponible', 1);
+  connect('Extraire les faits avec IA', 'Valider les faits'); connect('Extraire les faits avec IA', 'Contenir la panne IA', 1);
+  connect('Valider les faits', 'Appliquer les règles de qualification');
+  connect('Appliquer les règles de qualification', 'Composer le brouillon');
+  connect('Composer le brouillon', 'Enregistrer le résultat'); connect('Contenir la panne IA', 'Enregistrer le résultat');
   connect('Enregistrer le résultat', 'Préparer le suivi'); connect('Enregistrer le résultat', 'Persistance à vérifier', 1);
   connect('Préparer le suivi', 'Google Sheets configuré ?');
   connect('Google Sheets configuré ?', 'Synchroniser Google Sheets'); connect('Google Sheets configuré ?', 'Conserver sans Google Sheets', 1);
@@ -178,6 +194,10 @@ return [{json:{ok:false,status:'sink_tracking_error',record:$('Préparer le suiv
   connect('Synchroniser Google Sheets', 'Confirmer la synchronisation'); connect('Synchroniser Google Sheets', 'Signaler l’échec Sheets', 1);
   for (const name of ['Confirmer la synchronisation', 'Signaler l’échec Sheets']) {
     connect(name, 'Résultat prêt pour relecture'); connect(name, 'Suivi de synchronisation à vérifier', 1);
+  }
+  // Keep the same three visual zones; make room for the two explicit policy nodes.
+  for (const node of nodes) {
+    if (node.position[0] >= 1340 && !['Appliquer les règles de qualification', 'Composer le brouillon'].includes(node.name)) node.position[0] += 560;
   }
   return {
     id: 'atelierQualificationIA01', name: 'L’Atelier n8n · Qualification IA des demandes', nodes, connections,

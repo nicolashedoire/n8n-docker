@@ -1,0 +1,13 @@
+# Included by scripts/demo-compose.sh only when LLM_PROVIDER=openai.
+# No API key value appears in Compose environment variables or rendered config.
+services:
+  qualification-api:
+    environment:
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+    volumes:
+      - type: bind
+        source: ./local-files/openai-api-key
+        target: /run/secrets/openai_api_key
+        read_only: true
+        bind:
+          create_host_path: false
