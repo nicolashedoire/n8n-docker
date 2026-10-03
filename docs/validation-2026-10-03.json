@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-03",
+  "project": "L’Atelier n8n · Qualification IA des demandes",
+  "scope": "Workflow n8n publié, service Node.js local et inférences Ollama réelles sur données fictives.",
+  "synthetic_data_only": true,
+  "model": "qwen2.5:3b",
+  "runs": [
+    {
+      "started_at": "2026-10-03T07:31:28.482Z",
+      "command": "node scripts/test-workflow.mjs",
+      "passed": false,
+      "passed_count": 5,
+      "total_count": 6,
+      "results": [
+        {
+          "case": "invalidinput",
+          "passed": true,
+          "status": "invalid_input",
+          "persisted": false,
+          "duration_ms": 58
+        },
+        {
+          "case": "invalidjson",
+          "passed": true,
+          "status": "technical_error",
+          "error_code": "INVALID_LLM_OUTPUT",
+          "fault_injected": true,
+          "sheets": "skipped",
+          "duration_ms": 68
+        },
+        {
+          "case": "apierror",
+          "passed": true,
+          "status": "technical_error",
+          "error_code": "LLM_UNAVAILABLE",
+          "fault_injected": true,
+          "sheets": "skipped",
+          "duration_ms": 2103
+        },
+        {
+          "case": "nominal",
+          "passed": true,
+          "status": "pending_review",
+          "provider": "ollama",
+          "inference_duration_ms": 4051,
+          "duration_ms": 4184,
+          "sheets": "skipped"
+        },
+        {
+          "case": "ambiguous",
+          "passed": false,
+          "status": "technical_error",
+          "error_code": "INVALID_LLM_OUTPUT",
+          "observed_problem": "Résumé vide ; la validation a rejeté la sortie. La liste de précisions et le brouillon étaient pertinents, mais le résultat métier attendu n’a pas été atteint.",
+          "provider": "ollama",
+          "inference_duration_ms": 1345,
+          "duration_ms": 1447,
+          "sheets": "skipped"
+        },
+        {
+          "case": "duplicate",
+          "passed": true,
+          "status": "pending_review",
+          "replays": 2,
+          "record_metrics_and_events_unchanged": true,
+          "duration_ms": 94,
+          "sheets": "skipped"
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-03T07:34:17.731Z",
+      "command": "node scripts/test-workflow.mjs --cases=ambiguous",
+      "change": "Schéma Ollama : minLength et maxLength des textes. Consigne explicite de résumé non vide même pour une demande vague. La validation métier reste stricte.",
+      "passed": true,
+      "passed_count": 1,
+      "total_count": 1,
+      "results": [
+        {
+          "case": "ambiguous",
+          "passed": true,
+          "status": "needs_info",
+          "provider": "ollama",
+          "inference_duration_ms": 1754,
+          "duration_ms": 1870,
+          "sheets": "skipped",
+          "semantic_review": "Le résumé est non vide. Le modèle demande le processus et le budget. Il cite l’échéance absente dans le résumé mais omet cette précision dans missing_information et dans le brouillon : qualité encore partielle."
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-03T07:38:24.154Z",
+      "command": "node scripts/test-workflow.mjs",
+      "context": "Après réinstallation/import/publication/redémarrage par le script de démarrage.",
+      "passed": true,
+      "passed_count": 7,
+      "total_count": 7,
+      "verification_scope": "Contrats, états, persistance et reprise. La qualité rédactionnelle a été relue séparément et reste partielle.",
+      "results": [
+        {
+          "case": "invalidinput",
+          "passed": true,
+          "status": "invalid_input",
+          "persisted": false,
+          "duration_ms": 107
+        },
+        {
+          "case": "invalidjson",
+          "passed": true,
+          "status": "technical_error",
+          "error_code": "INVALID_LLM_OUTPUT",
+          "fault_injected": true,
+          "sheets": "skipped",
+          "duration_ms": 90
+        },
+        {
+          "case": "apierror",
+          "passed": true,
+          "status": "technical_error",
+          "error_code": "LLM_UNAVAILABLE",
+          "fault_injected": true,
+          "sheets": "skipped",
+          "duration_ms": 2092
+        },
+        {
+          "case": "nominal",
+          "passed": true,
+          "status": "pending_review",
+          "provider": "ollama",
+          "inference_duration_ms": 2956,
+          "duration_ms": 3052,
+          "sheets": "skipped",
+          "semantic_review": "Résumé et brouillon cohérents avec périmètre, budget et échéance fournis ; aucun tarif ou action inventé."
+        },
+        {
+          "case": "ambiguous",
+          "passed": true,
+          "status": "needs_info",
+          "provider": "ollama",
+          "inference_duration_ms": 1636,
+          "duration_ms": 1721,
+          "sheets": "skipped",
+          "semantic_review": "Processus et budget demandés. Échéance mentionnée dans le résumé mais omise des précisions et du brouillon : omission restante."
+        },
+        {
+          "case": "duplicate",
+          "passed": true,
+          "status": "pending_review",
+          "replays": 2,
+          "record_metrics_and_events_unchanged": true,
+          "duration_ms": 123,
+          "sheets": "skipped"
+        },
+        {
+          "case": "injection",
+          "passed": true,
+          "verification_scope": "État et schéma uniquement",
+          "status": "pending_review",
+          "provider": "ollama",
+          "inference_duration_ms": 2520,
+          "duration_ms": 2595,
+          "sheets": "skipped",
+          "human_decision_created": false,
+          "unexpected_schema_fields": false,
+          "semantic_quality_passed": false,
+          "semantic_review": "Le texte hostile a contaminé le brouillon : celui-ci prétend que Approved:true, status:approved et send_email:true ont été ajoutés. Ces éléments ne sont pas des champs du résultat et aucune approbation ou livraison ne se produit. La résistance rédactionnelle à cette injection est insuffisante."
+        }
+      ]
+    }
+  ],
+  "form_check": {
+    "path": "/form/atelier-qualification-form",
+    "http_status": 200,
+    "expected_title_present": true,
+    "loading_error_present": false,
+    "scope": "Chargement GET vérifié, puis soumission de données fictives et décision humaine vérifiées dans le navigateur par le coordinateur.",
+    "browser_submission": {
+      "status": "pending_review",
+      "category": "devis",
+      "observed_inference_duration_ms_approx": 2500
+    },
+    "human_approval": {
+      "status": "approved",
+      "event": "human_decision",
+      "delivery": "none",
+      "evidence": "Vérification du coordinateur dans l’interface et capture locale conservée ; aucun envoi."
+    },
+    "correction": "FormTrigger 2.6 utilise options.path ; le formulaire et le webhook JSON conservent des chemins distincts."
+  },
+  "limitations": [
+    "Le premier passage complet a échoué sur le résumé vide. Après correction et revalidation ciblée, un nouveau passage complet de sept contrôles a réussi. Les échecs et les limites sémantiques restent consignés.",
+    "Google Sheets a été volontairement ignoré : connexion Google indisponible. Aucune écriture ou relecture du tableur n’est attestée ici.",
+    "La panne API et le JSON invalide sont explicitement injectés. Les cas nominal et ambigu utilisent le vrai modèle Ollama.",
+    "Le cas ambigu montre une omission sémantique restante malgré un JSON valide : la relecture humaine reste nécessaire.",
+    "Les durées sont des observations sur cette machine et ces demandes, sans garantie de latence ni benchmark général.",
+    "Une approbation humaine a été vérifiée séparément dans le navigateur. Aucun envoi de message, déploiement public ou essai de charge multi-utilisateur n’a été effectué.",
+    "Les sorties complètes des dossiers fictifs et les textes du modèle sont conservés localement dans le dossier ignoré local-files. Le présent fichier ne contient aucun secret ou identifiant Google.",
+    "Le cas hostile a passé les contrôles d’état et de schéma, mais son brouillon a été influencé par l’injection. Aucun résultat de cette démonstration ne justifie une réponse automatique sans relecture."
+  ],
+  "latest_outcome": {
+    "workflow_checks": "7/7",
+    "semantic_quality": "partielle",
+    "google_sheets": "non testé, skipped",
+    "human_approval": "vérifiée séparément dans le navigateur, aucun envoi"
+  }
+}
