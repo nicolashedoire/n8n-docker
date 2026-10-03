@@ -1,0 +1,411 @@
+#!/usr/bin/env python3
+"""Render a local, narrated 1080p tutorial from an explicit scene manifest.
+
+No network, credentials, browser automation, or AI provider is used. Speech is
+macOS's installed Thomas voice, not an imitation of the channel author's voice.
+Example:
+  python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --check-only
+  python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json
+
+Manifest: array of {id, chapter, title, narration, bullets: [...],
+                    code?: string, screenshot?: string}.
+Relative screenshot paths resolve from the manifest's directory, then the cwd.
+Use one visual per scene (code OR screenshot). Subtitles use estimated timing
+within the measured speech duration, not forced word-level alignment.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+import shutil
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
+try:
+    from PIL import Image, ImageDraw, ImageFont, ImageOps
+except ImportError as exc:
+    raise SystemExit("Pillow est requis. Utiliser le Python du runtime Codex.") from exc
+
+WIDTH, HEIGHT, FPS = 1920, 1080, 25
+BACKGROUND = "#05091b"
+PANEL = "#10203c"
+PANEL_BORDER = "#243856"
+CORAL = "#f27b63"
+WHITE = "#f7f8fc"
+MUTED = "#a9b6ca"
+GREEN = "#99d7bd"
+BLUE = "#99c5fa"
+RENDER_VERSION = "2026-10-03-v1"
+FONT_DIR = Path("/System/Library/Fonts")
+
+
+def font(size: int, bold: bool = False, mono: bool = False):
+    path = FONT_DIR / ("Menlo.ttc" if mono else "Supplemental/Arial Bold.ttf" if bold else "Supplemental/Arial.ttf")
+    return ImageFont.truetype(str(path), size)
+
+
+def run(args: list[str], *, capture: bool = False) -> str:
+    result = subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE if capture else None,
+                            stderr=subprocess.PIPE)
+    return result.stdout.strip() if capture else ""
+
+
+def binary(name: str) -> str:
+    found = shutil.which(name)
+    if found:
+        return found
+    for base in ("/opt/homebrew/bin", "/usr/bin", "/usr/local/bin"):
+        path = Path(base) / name
+        if path.is_file():
+            return str(path)
+    raise ValueError(f"Exécutable local absent : {name}")
+
+
+def wrap_pixels(text: str, face, max_width: int) -> list[str]:
+    lines: list[str] = []
+    for paragraph in text.splitlines() or [""]:
+        current = ""
+        for word in paragraph.split():
+            candidate = f"{current} {word}".strip()
+            if face.getlength(candidate) <= max_width:
+                current = candidate
+            else:
+                if current:
+                    lines.append(current)
+                if face.getlength(word) > max_width:
+                    raise ValueError(f"Mot trop long pour une carte lisible : {word[:60]}")
+                current = word
+        lines.append(current)
+    return lines
+
+
+def text_lines(draw, lines: list[str], position, face, fill, line_height: int):
+    x, y = position
+    for line in lines:
+        draw.text((x, y), line, font=face, fill=fill)
+        y += line_height
+    return y
+
+
+def resolve_screenshot(value: str, manifest_path: Path) -> Path:
+    path = Path(value).expanduser()
+    candidates = [path] if path.is_absolute() else [manifest_path.parent / path, Path.cwd() / path]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    raise ValueError(f"Capture introuvable : {value}")
+
+
+def load_scenes(path: Path, selected: str | None) -> list[dict]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, list) or not data:
+        raise ValueError("Le manifeste doit être un tableau de scènes non vide.")
+    seen: set[str] = set()
+    scenes = []
+    wanted = set(selected.split(",")) if selected else None
+    for item in data:
+        if not isinstance(item, dict):
+            raise ValueError("Chaque scène doit être un objet JSON.")
+        scene = dict(item)
+        for key in ("id", "chapter", "title", "narration"):
+            if not isinstance(scene.get(key), str) or not scene[key].strip():
+                raise ValueError(f"Champ {key} absent ou vide dans une scène.")
+            scene[key] = scene[key].strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", scene["id"]):
+            raise ValueError(f"Identifiant de scène invalide : {scene['id']}")
+        if scene["id"] in seen:
+            raise ValueError(f"Identifiant de scène dupliqué : {scene['id']}")
+        seen.add(scene["id"])
+        if wanted and scene["id"] not in wanted:
+            continue
+        bullets = scene.get("bullets", [])
+        if not isinstance(bullets, list) or len(bullets) > 5 or any(not isinstance(x, str) or not x.strip() for x in bullets):
+            raise ValueError(f"{scene['id']} : fournir de 0 à 5 bullets non vides.")
+        scene["bullets"] = [b.strip() for b in bullets]
+        for key in ("code", "screenshot"):
+            if key in scene and not isinstance(scene[key], str):
+                raise ValueError(f"{scene['id']} : {key} doit être une chaîne.")
+        if scene.get("code") and scene.get("screenshot"):
+            raise ValueError(f"{scene['id']} : séparer le code et la capture en deux scènes.")
+        if scene.get("screenshot"):
+            scene["screenshot"] = str(resolve_screenshot(scene["screenshot"], path))
+            with Image.open(scene["screenshot"]) as picture:
+                picture.verify()
+        scenes.append(scene)
+    if wanted and wanted - seen:
+        raise ValueError(f"Scènes inconnues : {', '.join(sorted(wanted - seen))}")
+    if not scenes:
+        raise ValueError("Aucune scène sélectionnée.")
+    return scenes
+
+
+def layout(scene: dict):
+    visual = bool(scene.get("code") or scene.get("screenshot"))
+    split = visual and bool(scene["bullets"])
+    title_face = font(60, bold=True)
+    title_lines = wrap_pixels(scene["title"], title_face, 1744)
+    if len(title_lines) > 2:
+        raise ValueError("Titre trop long : garder au maximum deux lignes.")
+    bullet_width = 480 if split else 1570
+    bullet_size = 33 if split else 44
+    bullet_face = font(bullet_size)
+    bullet_lines = [wrap_pixels(b, bullet_face, bullet_width) for b in scene["bullets"]]
+    bullet_height = sum(len(lines) * int(bullet_size * 1.42) + 34 for lines in bullet_lines)
+    if bullet_height > 640:
+        raise ValueError("Bullets trop longues : diviser la scène en gardant le texte lisible.")
+    panel = (688, 278, 1832, 936) if split else (88, 278, 1832, 936)
+    code_lines = scene.get("code", "").expandtabs(2).rstrip().splitlines()
+    code_size = 32
+    if code_lines:
+        available_width = panel[2] - panel[0] - 136
+        while code_size >= 26:
+            code_face = font(code_size, mono=True)
+            if max(code_face.getlength(line) for line in code_lines) <= available_width and len(code_lines) * int(code_size * 1.43) <= 534:
+                break
+            code_size -= 1
+        if code_size < 26:
+            raise ValueError("Code trop dense : raccourcir les lignes ou scinder la scène (police minimale 26 px).")
+    return title_face, title_lines, bullet_face, bullet_lines, panel, code_lines, code_size
+
+
+def draw_code(draw, lines: list[str], panel, size: int):
+    left, top, right, bottom = panel
+    draw.text((left + 34, top + 22), "LIRE LE CODE · ÉTAPE PAR ÉTAPE", font=font(20, bold=True), fill=MUTED)
+    draw.line((left + 32, top + 64, right - 32, top + 64), fill=PANEL_BORDER, width=2)
+    face = font(size, mono=True)
+    number_face = font(max(19, size - 5), mono=True)
+    y = top + 90
+    token_pattern = re.compile(r"(//.*$|#.*$|'[^']*'|\"[^\"]*\"|\b(?:const|let|return|if|else|throw|new|function|export|import|from|await|async|for|of|in|true|false|null|def|class)\b|\b\d+(?:\.\d+)?\b)")
+    for number, line in enumerate(lines, 1):
+        draw.text((left + 27, y + 4), f"{number:02}", font=number_face, fill="#637d9c")
+        x = left + 91
+        cursor = 0
+        for match in token_pattern.finditer(line):
+            before = line[cursor:match.start()]
+            draw.text((x, y), before, font=face, fill=WHITE)
+            x += face.getlength(before)
+            token = match.group()
+            colour = MUTED if token.startswith(("//", "#")) else GREEN if token.startswith(("'", '"')) else BLUE if token[0].isdigit() else CORAL
+            draw.text((x, y), token, font=face, fill=colour)
+            x += face.getlength(token)
+            cursor = match.end()
+        draw.text((x, y), line[cursor:], font=face, fill=WHITE)
+        y += int(size * 1.43)
+
+
+def render_frame(scene: dict, index: int, total: int, chapter_number: int, destination: Path):
+    title_face, title_lines, bullet_face, bullet_lines, panel, code_lines, code_size = layout(scene)
+    frame = Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND)
+    draw = ImageDraw.Draw(frame)
+    draw.rounded_rectangle((88, 52, 166, 61), radius=4, fill=CORAL)
+    chapter_label = f"{chapter_number} / {scene['chapter'].upper()}"
+    if font(23, bold=True).getlength(chapter_label) > 1660:
+        raise ValueError(f"{scene['id']} : nom de chapitre trop long.")
+    draw.text((88, 84), chapter_label, font=font(23, bold=True), fill=CORAL)
+    text_lines(draw, title_lines, (88, 134), title_face, WHITE, 73)
+    visual = bool(code_lines or scene.get("screenshot"))
+    y = 300 if visual else 314
+    for ordinal, lines in enumerate(bullet_lines, 1):
+        draw.rounded_rectangle((88, y + 8, 120, y + 40), radius=9, fill=CORAL)
+        draw.text((97, y + 10), str(ordinal), font=font(19, bold=True), fill=BACKGROUND)
+        y = text_lines(draw, lines, (145, y), bullet_face, WHITE, int(bullet_face.size * 1.42)) + 34
+    if visual:
+        draw.rounded_rectangle(panel, radius=24, fill=PANEL, outline=PANEL_BORDER, width=2)
+    if code_lines:
+        draw_code(draw, code_lines, panel, code_size)
+    elif scene.get("screenshot"):
+        left, top, right, bottom = panel
+        draw.text((left + 27, top + 18), "CAPTURE RÉELLE DU PROJET", font=font(19, bold=True), fill=MUTED)
+        with Image.open(scene["screenshot"]) as original:
+            picture = ImageOps.exif_transpose(original).convert("RGB")
+            picture = ImageOps.contain(picture, (right - left - 36, bottom - top - 76), Image.Resampling.LANCZOS)
+            x = left + (right - left - picture.width) // 2
+            y = top + 56 + (bottom - top - 76 - picture.height) // 2
+            frame.paste(picture, (x, y))
+    draw.line((88, 975, 1832, 975), fill=PANEL_BORDER, width=2)
+    draw.text((88, 1002), "L’Atelier n8n · Voix de synthèse", font=font(23, bold=True), fill=MUTED)
+    pause = "Mettez en pause pour reproduire les étapes"
+    pause_face = font(23)
+    draw.text(((WIDTH - pause_face.getlength(pause)) / 2, 1002), pause, font=pause_face, fill=MUTED)
+    counter = f"{index:02} / {total:02}"
+    draw.text((1832 - font(25, mono=True).getlength(counter), 999), counter, font=font(25, mono=True), fill=CORAL)
+    draw.rectangle((0, 1074, round(WIDTH * index / total), 1080), fill=CORAL)
+    frame.save(destination)
+
+
+def duration(ffprobe: str, path: Path) -> float:
+    value = run([ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(path)], capture=True)
+    result = float(value)
+    if not math.isfinite(result) or result <= 0:
+        raise ValueError(f"Durée audio/vidéo invalide : {path.name}")
+    return result
+
+
+def timestamp(seconds: float, *, srt: bool = False) -> str:
+    millis = round(seconds * 1000)
+    hours, rest = divmod(millis, 3600000)
+    minutes, rest = divmod(rest, 60000)
+    secs, millis = divmod(rest, 1000)
+    return f"{hours:02}:{minutes:02}:{secs:02},{millis:03}" if srt else f"{hours:02}:{minutes:02}:{secs:02}"
+
+
+def subtitle_chunks(narration: str) -> list[str]:
+    sentences = re.split(r"(?<=[.!?;])\s+", " ".join(narration.split()))
+    chunks = []
+    for sentence in sentences:
+        lines = textwrap.wrap(sentence, width=43, break_long_words=False, break_on_hyphens=False)
+        chunks.extend("\n".join(lines[i:i + 2]) for i in range(0, len(lines), 2))
+    return chunks
+
+
+def ffmeta_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("=", "\\=").replace(";", "\\;").replace("#", "\\#").replace("\n", " ")
+
+
+def concat_escape(path: Path) -> str:
+    return str(path.resolve()).replace("'", "'\\''")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--manifest", type=Path, default=Path("work/tutorial-scenes.json"))
+    parser.add_argument("--output-dir", type=Path, default=Path("work/tutorial-render"))
+    parser.add_argument("--name", default="tutoriel-atelier-n8n")
+    parser.add_argument("--title", default="L’Atelier n8n — Comprendre la qualification IA")
+    parser.add_argument("--voice", default="Thomas")
+    parser.add_argument("--rate", type=int, default=165)
+    parser.add_argument("--pause", type=float, default=2.0)
+    parser.add_argument("--scenes", help="Liste d’identifiants séparés par des virgules, pour un aperçu.")
+    parser.add_argument("--check-only", action="store_true", help="Valider le manifeste et la lisibilité, sans générer de fichiers.")
+    parser.add_argument("--frames-only", action="store_true", help="Produire les PNG uniquement, sans voix ni vidéo.")
+    parser.add_argument("--no-resume", action="store_true", help="Recalculer tous les segments même si leur empreinte est inchangée.")
+    args = parser.parse_args()
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", args.name):
+        raise ValueError("--name accepte uniquement lettres ASCII, chiffres, tirets et underscores.")
+    if not 100 <= args.rate <= 240 or not 0 <= args.pause <= 10:
+        raise ValueError("Débit attendu : 100–240 mots/min ; pause : 0–10 secondes.")
+    scenes = load_scenes(args.manifest.resolve(), args.scenes)
+    for scene in scenes:
+        try:
+            layout(scene)
+        except ValueError as exc:
+            raise ValueError(f"{scene['id']} : {exc}") from exc
+    print(f"Manifeste valide : {len(scenes)} scènes, {sum(len(s['narration'].split()) for s in scenes)} mots.", flush=True)
+    if args.check_only:
+        return 0
+    destination = args.output_dir.resolve()
+    assets = destination / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    chapters = list(dict.fromkeys(s["chapter"] for s in scenes))
+    ffmpeg = ffprobe = say = None
+    if not args.frames_only:
+        ffmpeg, ffprobe, say = binary("ffmpeg"), binary("ffprobe"), binary("say")
+        voices = run([say, "-v", "?"], capture=True)
+        if not any(line.startswith(args.voice + " ") for line in voices.splitlines()):
+            raise ValueError(f"Voix locale absente : {args.voice}. Aucune voix ne sera téléchargée.")
+    timeline = []
+    total_elapsed = 0.0
+    subtitles: list[str] = []
+    subtitle_number = 1
+    for index, scene in enumerate(scenes, 1):
+        stem = assets / f"{index:02}-{scene['id']}"
+        png, aiff, audio, video = (stem.with_suffix(suffix) for suffix in (".png", ".aiff", ".m4a", ".mp4"))
+        narration_path, cache = stem.with_suffix(".txt"), stem.with_suffix(".json")
+        render_frame(scene, index, len(scenes), chapters.index(scene["chapter"]) + 1, png)
+        if args.frames_only:
+            print(f"[{index:02}/{len(scenes):02}] Carte : {png.name}", flush=True)
+            continue
+        signature = hashlib.sha256(json.dumps({"scene": scene, "version": RENDER_VERSION, "voice": args.voice,
+            "rate": args.rate, "pause": args.pause, "index": index, "total": len(scenes)}, sort_keys=True,
+            ensure_ascii=False).encode() + png.read_bytes()).hexdigest()
+        cached = json.loads(cache.read_text()) if cache.is_file() else {}
+        reuse = not args.no_resume and cached.get("sha256") == signature and video.is_file() and audio.is_file()
+        if reuse:
+            voice_duration = cached["voice_duration"]
+            segment_duration = cached["segment_duration"]
+            print(f"[{index:02}/{len(scenes):02}] Cache valide : {scene['id']}", flush=True)
+        else:
+            print(f"[{index:02}/{len(scenes):02}] Voix et vidéo : {scene['id']}", flush=True)
+            narration_path.write_text(scene["narration"] + "\n", encoding="utf-8")
+            run([say, "-v", args.voice, "-r", str(args.rate), "-f", str(narration_path), "-o", str(aiff)])
+            voice_duration = duration(ffprobe, aiff)
+            run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(aiff), "-c:a", "aac", "-b:a", "160k", "-ar", "48000", str(audio)])
+            requested_duration = math.ceil((voice_duration + args.pause) * FPS) / FPS
+            fade_out = max(0, requested_duration - 0.22)
+            run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-loop", "1", "-framerate", str(FPS), "-i", str(png),
+                 "-i", str(audio), "-vf", f"fade=t=in:st=0:d=0.22,fade=t=out:st={fade_out:.3f}:d=0.22",
+                 "-af", "apad", "-t", f"{requested_duration:.3f}", "-c:v", "libx264", "-preset", "veryfast", "-tune", "stillimage",
+                 "-crf", "20", "-pix_fmt", "yuv420p", "-r", str(FPS), "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+                 "-movflags", "+faststart", str(video)])
+            segment_duration = duration(ffprobe, video)
+            cache.write_text(json.dumps({"sha256": signature, "voice_duration": voice_duration,
+                "segment_duration": segment_duration}, indent=2), encoding="utf-8")
+        chunks = subtitle_chunks(scene["narration"])
+        weights = [len(re.sub(r"\s+", "", chunk)) for chunk in chunks]
+        denominator = sum(weights)
+        cursor = total_elapsed
+        for chunk, weight in zip(chunks, weights):
+            end = cursor + voice_duration * weight / denominator
+            subtitles.append(f"{subtitle_number}\n{timestamp(cursor, srt=True)} --> {timestamp(end, srt=True)}\n{chunk}\n")
+            subtitle_number += 1
+            cursor = end
+        timeline.append({"id": scene["id"], "chapter": scene["chapter"], "title": scene["title"],
+            "start": round(total_elapsed, 3), "duration": segment_duration, "voice_duration": voice_duration,
+            "frame": str(png), "video": str(video)})
+        total_elapsed += segment_duration
+    poster = destination / f"{args.name}-poster.png"
+    shutil.copyfile(assets / f"01-{scenes[0]['id']}.png", poster)
+    if args.frames_only:
+        print(f"Cartes et poster prêts : {destination}", flush=True)
+        return 0
+    srt_path = destination / f"{args.name}.srt"
+    srt_path.write_text("\n".join(subtitles), encoding="utf-8")
+    chapter_groups = []
+    for item in timeline:
+        if not chapter_groups or chapter_groups[-1]["title"] != item["chapter"]:
+            chapter_groups.append({"title": item["chapter"], "start": item["start"], "end": item["start"] + item["duration"]})
+        else:
+            chapter_groups[-1]["end"] = item["start"] + item["duration"]
+    metadata = [";FFMETADATA1", f"title={ffmeta_escape(args.title)}", "artist=L’Atelier n8n",
+                "comment=Guide monté à partir de cartes et captures réelles ; voix de synthèse macOS Thomas ; sous-titres à synchronisation estimée."]
+    for chapter in chapter_groups:
+        metadata.extend(["[CHAPTER]", "TIMEBASE=1/1000", f"START={round(chapter['start'] * 1000)}",
+                         f"END={round(chapter['end'] * 1000)}", f"title={ffmeta_escape(chapter['title'])}"])
+    metadata_path = destination / f"{args.name}.ffmetadata"
+    metadata_path.write_text("\n".join(metadata) + "\n", encoding="utf-8")
+    chapters_path = destination / f"{args.name}-chapitres.txt"
+    chapters_path.write_text("\n".join(f"{timestamp(c['start'])} {c['title']}" for c in chapter_groups) + "\n", encoding="utf-8")
+    concat_path = destination / f"{args.name}-segments.txt"
+    concat_path.write_text("\n".join(f"file '{concat_escape(Path(item['video']))}'" for item in timeline) + "\n", encoding="utf-8")
+    output = destination / f"{args.name}.mp4"
+    print("Assemblage du MP4, des chapitres et de la piste de sous-titres…", flush=True)
+    run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_path),
+         "-i", str(metadata_path), "-i", str(srt_path), "-map", "0:v:0", "-map", "0:a:0", "-map", "2:0",
+         "-map_metadata", "1", "-map_chapters", "1", "-c:v", "copy", "-c:a", "copy", "-c:s", "mov_text",
+         "-metadata:s:s:0", "language=fra", "-metadata:s:s:0", "title=Français · synchronisation estimée",
+         "-movflags", "+faststart", str(output)])
+    probe = json.loads(run([ffprobe, "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,width,height:chapter=start_time,end_time,tags", "-of", "json", str(output)], capture=True))
+    report = {"title": args.title, "scene_count": len(scenes), "chapter_count": len(chapter_groups),
+              "voice": args.voice, "speech_rate": args.rate, "pause_seconds": args.pause,
+              "subtitle_timing": "estimated from each measured speech duration; not forced alignment",
+              "manifest": str(args.manifest.resolve()), "output": str(output), "probe": probe, "scenes": timeline}
+    (destination / f"{args.name}-rapport.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Terminé : {output}\nDurée : {timestamp(float(probe['format']['duration']))} · {len(scenes)} scènes · {len(chapter_groups)} chapitres", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except subprocess.CalledProcessError as exc:
+        print(f"Erreur d’outil local ({Path(exc.cmd[0]).name}, code {exc.returncode}) : {exc.stderr or ''}", file=sys.stderr)
+        raise SystemExit(1)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        print(f"Erreur : {exc}", file=sys.stderr)
+        raise SystemExit(1)

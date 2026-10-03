@@ -27,3 +27,22 @@ Le tutoriel vidéo accompagne ces chapitres avec des captures commentées, des c
 - Aucun envoi d’email, même après approbation.
 
 Ces documents expliquent le prototype existant. Ils ne prétendent pas démontrer sa fiabilité sur tous les messages ni constituer une mise en production chez un client.
+
+## Vidéo et sources de montage
+
+La vidéo complète dure **40 min 51 s** : 50 scènes réparties en 16 chapitres. Elle est livrée au format MP4 1080p avec voix de synthèse Thomas, chapitres intégrés et sous-titres français. Le MP4 est fourni séparément ; les médias volumineux ne sont pas suivis par Git.
+
+- [Script intégral minuté, trois propositions d’ouverture et repères pédagogiques](SCRIPT-VIDEO.md)
+- [Manifeste des scènes](video-scenes.json)
+- [Script de rendu local](../../scripts/render-tutorial.py)
+
+Le calage des sous-titres est estimé à partir de la durée audio de chaque scène. Les extraits de code sont des fragments pédagogiques, et ne sont pas tous des programmes autonomes exécutables.
+
+Pour reproduire le montage sur macOS, utiliser Python 3 avec Pillow, `ffmpeg`, `ffprobe` et la voix française Thomas déjà installés. Depuis la racine du dépôt :
+
+```sh
+python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --check-only
+python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --output-dir work/tutorial-render
+```
+
+Le script ne contacte aucun fournisseur d’IA et ne lit aucune clé. Les fichiers intermédiaires restent dans `work/`, ignoré par Git.
