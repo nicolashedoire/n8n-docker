@@ -12,3 +12,7 @@ local-files/
 *.db
 # macOS
 .DS_Store
+# Demo runtime and generated local configuration
+runtime/
+*.log
+__pycache__/

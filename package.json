@@ -1,0 +1,11 @@
+{
+  "name": "atelier-n8n-qualification",
+  "private": true,
+  "type": "module",
+  "description": "Local n8n AI qualification workshop with durable requests and human review",
+  "engines": {"node": ">=22.13"},
+  "scripts": {
+    "test": "node --test demo/test/*.test.mjs",
+    "workflows:build": "node scripts/build-workflows.mjs"
+  }
+}
