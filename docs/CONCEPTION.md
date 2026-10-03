@@ -22,7 +22,7 @@ n8n reste l’orchestrateur visible. Un petit service Node.js fournit la persist
 
 `LLM_PROVIDER=ollama` sélectionne Ollama sur le Mac ; Compose fournit `qwen2.5:3b`. Sans configuration, ce mode reste la valeur par défaut. Il n’y a aucun repli automatique entre fournisseurs. Le choix ne change ni les règles métier ni les gabarits ; les métriques conservent le fournisseur et le modèle réellement employés.
 
-Au 3 octobre 2026, le code OpenAI est préparé et testé avec des réponses simulées. Aucune exécution réelle OpenAI n’est validée en l’absence de clé. Le [rapport de validation](VALIDATION.md) est la référence pour les résultats observés, distincts des comportements attendus.
+Au 3 octobre 2026, OpenAI est activé avec `gpt-5.6-terra` et testé en réel : 9/9 cas métier et 7/7 contrôles de parcours réussissent. Les critères et scripts sont identiques à la mesure Ollama précédente, qui reste conservée avec son résultat de 5/9 cas métier. Le [rapport OpenAI](quality-2026-10-03-openai.json) et le [rapport de validation](VALIDATION.md) distinguent les résultats observés des comportements attendus. Ces essais sur données fictives ne constituent pas une validation de production ni de Google Sheets.
 
 ## Contrat IA
 

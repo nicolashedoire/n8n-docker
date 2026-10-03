@@ -2,14 +2,18 @@
 
 ## Version actuelle — facts-v2 et raccordement OpenAI
 
-La correction sépare l’extraction des faits, les règles de qualification et la composition du brouillon. Elle est installée et publiée dans n8n. Le fournisseur actuellement testé en réel est **Ollama / qwen2.5:3b**. **OpenAI est raccordé dans le code, mais non activé et non testé en réel : la clé API reste à renseigner.**
+La correction sépare l’extraction des faits, les règles de qualification et la composition du brouillon. Elle est installée et publiée dans n8n. **OpenAI / gpt-5.6-terra est maintenant activé et testé en réel**, après création d’une clé dédiée. Les appels passent par l’API Responses ; aucun repli vers Ollama n’est activé.
 
 - **29 tests isolés réussis** : persistance, règles métier, preuve source, décisions humaines et adaptateur OpenAI. Les tests OpenAI simulent les réponses HTTP ; ils ne prouvent pas un accès au service ou au modèle.
-- **7 contrôles d’intégration réussis** sur le vrai workflow : entrées invalides, défauts simulés, chemin nominal, demande ambiguë, doublon et restriction des actions.
-- **5 cas métier sur 9 réussis** avec le vrai modèle local. Ce résultat est insuffisant pour qualifier la démonstration comme fiable sur le corpus entier.
+- **7 contrôles d’intégration sur 7 réussis avec OpenAI** sur le vrai workflow : entrées invalides, défauts simulés, chemin nominal, demande ambiguë, doublon et restriction des actions. Les scénarios de panne HTTP et de JSON invalide sont volontairement simulés ; les cas normaux appellent réellement OpenAI.
+- **9 cas métier sur 9 réussis avec OpenAI**, en conservant exactement les critères du baseline Ollama (5/9). Les quatre cas précédemment en échec passent : budget seul manquant, renseignements vagues, support et demande complète avec instruction hostile.
 - La demande exacte de Camille (4 000 €, démarrage avant le 15 novembre 2026) réussit : faits présents, brouillon au nom du prestataire, aucune question redondante.
 
-[Rapport de qualité facts-v2](quality-2026-10-03.json) : critères fixés avant l’inférence, succès et échecs conservés, uniquement des mesures et identifiants de cas fictifs. Les sorties complètes restent privées dans `local-files/`.
+[Rapport OpenAI](quality-2026-10-03-openai.json) et [baseline Ollama facts-v2 conservé](quality-2026-10-03.json) : critères fixés avant l’inférence, succès et échecs conservés, uniquement des mesures et identifiants de cas fictifs. Les sorties complètes restent privées dans `local-files/`. Les neuf cas OpenAI ont été exécutés une fois chacun : d’abord la demande complète, puis les huit autres, sans modifier les critères entre les appels.
+
+Ces neuf succès attestent cette campagne de démonstration ; ils ne mesurent ni un taux d’erreur sur les demandes réelles d’un client ni la stabilité du modèle sur des exécutions répétées. Une recette métier plus large reste nécessaire avant la production.
+
+### Baseline Ollama facts-v2 : quatre échecs conservés
 
 | Échec métier observé | Diagnostic |
 | --- | --- |
@@ -18,23 +22,26 @@ La correction sépare l’extraction des faits, les règles de qualification et 
 | Support | Le modèle omet le produit pourtant fourni et pose une question inutile. |
 | Demande complète avec instruction hostile | Le besoin est omis et redemandé ; aucune approbation ni aucun envoi ne sont déclenchés. |
 
-Les nouveaux gabarits ne recopient pas de texte libre du modèle dans le brouillon. Cela corrige l’inversion de rôle et la contamination rédactionnelle observées, sans garantir la pertinence de chaque fait extrait. Le passage à OpenAI doit reprendre **les mêmes neuf critères**, sans les assouplir après lecture des réponses.
+Les nouveaux gabarits ne recopient pas de texte libre du modèle dans le brouillon. Cela corrige l’inversion de rôle et la contamination rédactionnelle observées, sans garantir la pertinence de chaque fait extrait. Le passage à OpenAI a repris **les mêmes neuf critères**, sans les assouplir après lecture des réponses.
 
 ```bash
 npm test
-EXPECTED_PROVIDER=ollama node scripts/test-quality.mjs
-# Après configuration effective de la clé et démarrage OpenAI :
+# Fournisseur OpenAI actuellement configuré :
 EXPECTED_PROVIDER=openai node scripts/test-quality.mjs
 EXPECTED_PROVIDER=openai node scripts/test-workflow.mjs
+# Pour comparer Ollama, le configurer et redémarrer d’abord,
+# puis utiliser EXPECTED_PROVIDER=ollama.
 ```
 
 La réinstallation a sauvegardé l’ancien workflow, importé les 30 nœuds (dont 5 notes), publié et redémarré n8n. Google Sheets reste désactivé : aucune écriture Google n’est validée. Les dossiers historiques sont conservés ; une correction ou un changement de modèle se teste avec un nouvel identifiant.
 
 ![Workflow facts-v2 publié](images/atelier-workflow-facts-v2.png)
 
-Le cas Camille a aussi été rejoué depuis le tableau dans Chrome avec un nouvel identifiant : résultat à relire, budget et échéance conservés, aucune question.
+Le cas Camille a aussi été rejoué depuis le tableau dans Chrome avec un nouvel identifiant et **OpenAI** : résultat à relire, budget et échéance conservés, aucune question. L’exécution n8n a duré **2,033 s**, dont **1,950 s** d’appel au modèle. Les nœuds de validation ont été ouverts pour vérifier les faits et les métriques. Ces durées sont des observations ponctuelles.
 
-![Résultat Camille facts-v2](images/resultat-camille-facts-v2.png)
+![Exécution n8n avec OpenAI](images/execution-n8n-openai.png)
+
+![Résultat Camille avec OpenAI](images/resultat-camille-openai.png)
 
 [Correction du workflow et adaptateur OpenAI — 338194b](https://github.com/nicolashedoire/n8n-docker/commit/338194b)
 

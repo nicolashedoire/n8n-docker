@@ -8,7 +8,7 @@ Le point de départ est l’atelier existant : formulaire de contact, connexion 
 
 Le résultat est un démonstrateur local sur données fictives. Il n’a pas encore été exploité chez un client. Les vidéos de l’atelier sont des supports pédagogiques ; la démonstration d’entretien doit montrer le workflow et son exécution actuelle.
 
-**État au 3 octobre :** la version facts-v2 obtient 7/7 contrôles de parcours avec Ollama et 5/9 cas de qualité métier ; quatre défauts restent visibles dans le [rapport](quality-2026-10-03.json). OpenAI est une option préparée, non encore activée ni validée avec une clé réelle. Google Sheets reste désactivé dans les essais actuels. Présenter un prototype explicable et ses mesures, sans annoncer une fiabilité de production.
+**État au 3 octobre :** OpenAI est activé et testé en réel avec `gpt-5.6-terra`. La version facts-v2 réussit 9/9 cas de qualité métier et 7/7 contrôles de parcours, sur les mêmes critères que la mesure Ollama à 5/9. Le [rapport OpenAI](quality-2026-10-03-openai.json) complète le [rapport Ollama conservé](quality-2026-10-03.json). Google Sheets reste désactivé dans ces essais. Présenter un prototype explicable et ses mesures, sans annoncer une fiabilité de production.
 
 ### Pitch de 60 à 90 secondes
 
@@ -45,6 +45,20 @@ Si l’inférence dépasse le temps prévu, expliquer l’architecture pendant s
 Pour une capture de secours datée : [workflow facts-v2](images/atelier-workflow-facts-v2.png) et [demande fictive de Camille](images/resultat-camille-facts-v2.png). Les présenter comme des captures d’exécution, pas comme un nouvel essai en direct.
 
 Le nœud Google Sheets de l’export public est désactivé tant que ses références locales ne sont pas configurées. La branche locale reste utilisable avec `sink_status: skipped`. La connexion Google existante doit être contrôlée/reconnectée avant d’annoncer une démonstration du tableur. En cas d’échec, montrer son état réel ; le résultat métier reste conservé dans SQLite.
+
+### Montrer ce que l’IA apporte, puis ce que n8n contrôle
+
+Depuis une exécution récente correspondant au nouvel identifiant, ouvrir successivement ces sorties. Développer les champs utiles, sans parcourir tout le code :
+
+| Nœud | Champs à montrer | Explication métier |
+| --- | --- | --- |
+| Extraire les faits avec IA | `text`, `metrics.provider`, `metrics.model` | « Le modèle reconnaît la catégorie et repère les informations dans le message. » |
+| Valider les faits | `extraction.category`, `extraction.facts` | « Le besoin, le budget et l’échéance doivent correspondre à des extraits du message. » |
+| Appliquer les règles de qualification | `qualification.required_fields`, `qualification.missing_fields` | « Pour un devis, ces trois informations sont nécessaires ; les règles calculent ce qui manque. » |
+| Composer le brouillon | `analysis.draft_reply` | « La réponse parle au nom du prestataire et demande seulement les précisions manquantes. » |
+| Enregistrer le résultat | `record.status`, `record.extraction`, `record.metrics` | « Le dossier conserve le résultat, sa provenance et le modèle utilisé, avant la relecture humaine. » |
+
+Sur une demande complète, rapprocher les trois faits du message puis lire l’accusé de réception sans question. Sur une demande incomplète, montrer le champ vide, le manque calculé et la question correspondante. Le tableau local sert à la revue métier ; son volet **Demande originale et journal** conserve aussi l’extraction dans l’événement d’enregistrement.
 
 ## Ce que font les 30 nœuds
 
@@ -85,7 +99,7 @@ flowchart LR
 
 **Quelle partie relève de l’IA ?** L’interprétation du message, la catégorie et la sélection des faits. Les règles de persistance, les états, les doublons et la décision humaine sont dans du code déterministe. Ici, le modèle exécute une tâche bornée dans un workflow. Un agent choisissant dynamiquement des outils demanderait une boucle d’orchestration, une liste d’outils autorisés et un budget supplémentaire.
 
-**Quel modèle ?** Le fournisseur est choisi par `LLM_PROVIDER`, sans repli automatique. `openai` utilise `OPENAI_MODEL`, par défaut `gpt-5.6-terra`, via Responses API et un schéma strict. `ollama` utilise `OLLAMA_MODEL`, par défaut `qwen2.5:3b`, également fourni par Compose. Lire fournisseur et modèle dans les métriques avant l’entretien. Le choix OpenAI demande une clé et transmet le texte à l’API distante ; le choix Ollama garde l’inférence sur le Mac. Leur pertinence doit être comparée sur les mêmes critères métier, latence, coût et contraintes de données. La [fiche du modèle OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-terra) et le [guide des sorties structurées](https://developers.openai.com/api/docs/guides/structured-outputs) documentent l’option préparée ; ils ne prouvent pas son résultat sur ce projet.
+**Quel modèle ?** Le fournisseur est choisi par `LLM_PROVIDER`, sans repli automatique. L’installation actuelle utilise OpenAI avec `OPENAI_MODEL=gpt-5.6-terra`, via Responses API et un schéma strict. `ollama` reste disponible avec `OLLAMA_MODEL`, par défaut `qwen2.5:3b`, également fourni par Compose. Lire fournisseur et modèle dans les métriques avant l’entretien. Le choix OpenAI demande une clé et transmet le texte à l’API distante ; le choix Ollama garde l’inférence sur le Mac. Leur pertinence doit être comparée sur les mêmes critères métier, latence, coût et contraintes de données. La [fiche du modèle OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-terra) et le [guide des sorties structurées](https://developers.openai.com/api/docs/guides/structured-outputs) décrivent les capacités de l’API ; les rapports du projet mesurent les résultats de cette démonstration.
 
 **Pourquoi un schéma JSON ?** Il définit une extraction stable : `category` et six faits dans `facts`, sans champ supplémentaire. n8n contrôle les extraits, puis construit `category`, `summary`, `missing_information`, `draft_reply` grâce aux règles. Le serveur recalcule indépendamment ce résultat avant stockage. Le respect du schéma n’atteste pas la justesse sémantique. Il faut toujours mesurer la qualité et relire les cas sensibles.
 
@@ -122,7 +136,7 @@ flowchart LR
 
 **Historique à raconter précisément :** la première version Ollama a réussi sept contrôles de parcours tout en oubliant une échéance et en recopiant une instruction hostile dans un brouillon. Aucune action n’avait été déclenchée. Ces défauts, puis le mauvais rôle du rédacteur, ont motivé facts-v2 : extraction par l’IA, règles et gabarits dans n8n. Les anciens dossiers restent inchangés et portent leur ancienne version.
 
-**Mesure actuelle du 3 octobre :** 29 tests isolés et 7/7 contrôles de parcours réussissent. La suite métier facts-v2 avec Ollama réussit **5/9 cas**, dont la demande complète à 4 000 €. Les quatre échecs sont conservés : un extrait non attesté rejeté, une demande vague considérée complète et deux précisions redemandées malgré des informations fournies. Aucun résultat OpenAI réel n’est inclus. Montrer cette différence entre protection technique et qualité métier ; voir [Validation](VALIDATION.md) et [résultats détaillés](quality-2026-10-03.json).
+**Mesure actuelle du 3 octobre :** 29 tests isolés réussissent. Avec OpenAI, les appels réels donnent **9/9 cas métier et 7/7 contrôles de parcours**, avec environ 1,5 à 4,1 secondes par cas métier. La mesure Ollama de 5/9 est préservée, ainsi que ses quatre échecs : un extrait non attesté rejeté, une demande vague considérée complète et deux précisions redemandées malgré des informations fournies. Le même corpus et les mêmes critères rendent la comparaison lisible. Cette réussite limitée à neuf messages ne démontre pas une fiabilité générale ; voir [Validation](VALIDATION.md) et le [rapport OpenAI](quality-2026-10-03-openai.json).
 
 ## Passage en production : réponse en une minute
 

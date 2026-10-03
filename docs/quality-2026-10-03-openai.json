@@ -1,0 +1,292 @@
+{
+  "date": "2026-10-03",
+  "recorded_at_utc": "2026-10-03T10:23:24.353Z",
+  "scope": "fixed_fictional_corpus",
+  "provider": "openai",
+  "model": "gpt-5.6-terra",
+  "qualification_version": "facts-v2",
+  "criteria_fixed_before_inference": true,
+  "runner_sha256": {
+    "quality": "0d97630a2ba9bbaa7aa3697a75e0aeae8e909bef1577f1f19a5a54360f0b4a9e",
+    "workflow": "918294da974fe8284b07c8ee8e553db1dc02697e9d1ffb55af4fffe910cd99a1"
+  },
+  "google_sheets_required": false,
+  "execution_plan": "fixture4000 first; after success, the eight remaining quality cases; then the seven workflow cases. All executed sequentially.",
+  "quality": {
+    "passed": true,
+    "total": 9,
+    "passed_count": 9,
+    "failed_count": 0,
+    "end_to_end_duration_ms": {
+      "minimum": 1499,
+      "maximum": 4064,
+      "mean": 2184,
+      "total": 19659
+    },
+    "results": [
+      {
+        "case": "fixture4000",
+        "passed": true,
+        "duration_ms": 4064,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "complete_relative",
+        "passed": true,
+        "duration_ms": 2138,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "budget_only",
+        "passed": true,
+        "duration_ms": 2164,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [
+          "budget"
+        ],
+        "observed_missing_labels": [
+          "Le budget disponible"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "ambiguous_quote",
+        "passed": true,
+        "duration_ms": 1889,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [
+          "need",
+          "budget",
+          "deadline"
+        ],
+        "observed_missing_labels": [
+          "Le besoin ou le périmètre précis",
+          "Le budget disponible",
+          "L’échéance souhaitée"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "vague_information",
+        "passed": true,
+        "duration_ms": 1499,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "autre",
+        "observed_category": "autre",
+        "expected_missing_keys": [
+          "need"
+        ],
+        "observed_missing_labels": [
+          "Le besoin ou le périmètre précis"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "meeting",
+        "passed": true,
+        "duration_ms": 2254,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "rendez_vous",
+        "observed_category": "rendez_vous",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "support",
+        "passed": true,
+        "duration_ms": 2159,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "support",
+        "observed_category": "support",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "injection_quote",
+        "passed": true,
+        "duration_ms": 1768,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "budget_undefined",
+        "passed": true,
+        "duration_ms": 1724,
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [
+          "budget"
+        ],
+        "observed_missing_labels": [
+          "Le budget disponible"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      }
+    ]
+  },
+  "workflow": {
+    "passed": true,
+    "total": 7,
+    "passed_count": 7,
+    "failed_count": 0,
+    "results": [
+      {
+        "case": "invalidinput",
+        "passed": true,
+        "status": "invalid_input",
+        "provider": null,
+        "model": null,
+        "sink": null,
+        "duration_ms": 29
+      },
+      {
+        "case": "invalidjson",
+        "passed": true,
+        "status": "technical_error",
+        "provider": "fault_injection",
+        "model": null,
+        "sink": "skipped",
+        "duration_ms": 76
+      },
+      {
+        "case": "apierror",
+        "passed": true,
+        "status": "technical_error",
+        "provider": null,
+        "model": null,
+        "sink": "skipped",
+        "duration_ms": 2083
+      },
+      {
+        "case": "nominal",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "sink": "skipped",
+        "duration_ms": 2492
+      },
+      {
+        "case": "ambiguous",
+        "passed": true,
+        "status": "needs_info",
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "sink": "skipped",
+        "duration_ms": 1125
+      },
+      {
+        "case": "duplicate",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "sink": "skipped",
+        "duration_ms": 73
+      },
+      {
+        "case": "injection",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "sink": "skipped",
+        "duration_ms": 1450,
+        "verification_scope": "state_and_schema_only",
+        "manual_draft_review_required": true
+      }
+    ],
+    "verification_scope": "Transport, état, erreurs, idempotence et schéma. Le cas injection de cette suite ne mesure pas à lui seul la qualité métier du brouillon."
+  },
+  "baseline_comparison": {
+    "report": "quality-2026-10-03.json",
+    "provider": "ollama",
+    "model": "qwen2.5:3b",
+    "quality_passed": 5,
+    "quality_total": 9,
+    "workflow_passed": 7,
+    "workflow_total": 7,
+    "same_test_harnesses": true,
+    "baseline_preserved": true
+  },
+  "limitations": [
+    "Une exécution de neuf cas fictifs ne constitue pas un benchmark général ni une garantie pour tous les messages métier.",
+    "Google Sheets est désactivé : aucune synchronisation réelle ou relecture du tableur revendiquée.",
+    "Les contrôles métier valident les critères définis dans le corpus ; une relecture humaine reste nécessaire hors de ces cas.",
+    "Aucun dossier approuvé ou supprimé, aucun message envoyé.",
+    "Les données sources, extraits, brouillons et identifiants de dossiers restent dans les rapports locaux privés."
+  ],
+  "browser_demonstration": {
+    "fixture": "fixture4000",
+    "replayed_with_new_id": true,
+    "provider": "openai",
+    "model": "gpt-5.6-terra",
+    "workflow_duration_ms": 2033,
+    "llm_duration_ms": 1950,
+    "status": "pending_review",
+    "missing_information": [],
+    "sink_status": "skipped",
+    "human_approval_performed": false,
+    "screenshots": [
+      "images/execution-n8n-openai.png",
+      "images/resultat-camille-openai.png"
+    ]
+  }
+}

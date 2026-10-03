@@ -65,9 +65,16 @@ EXPECTED_PROVIDER=openai node scripts/test-quality.mjs
 
 La suite de qualité utilise des messages fictifs et le vrai workflow publié. Remplacer `openai` par `ollama` pour tester le fournisseur local ; cette variable vérifie la configuration, elle ne la modifie pas. Les règles sont également testées sans modèle pour distinguer un défaut d’extraction d’un défaut de logique métier.
 
-**État au 3 octobre 2026 :** la nouvelle mesure facts-v2 avec Ollama donne **7/7 contrôles de parcours et 5/9 cas de qualité métier**. Les quatre échecs sont un extrait non attesté correctement bloqué, une demande vague considérée complète et deux demandes de précision inutiles. La correction des gabarits ne résout donc pas tous les défauts d’extraction. Les résultats et les critères fixés avant l’inférence sont conservés dans le [rapport du corpus](quality-2026-10-03.json).
+**Mesures réelles du 3 octobre 2026, version facts-v2 :**
 
-Les sept contrôles historiques de la première version restent une mesure distincte et n’annulent pas ses défauts de contenu. L’adaptateur OpenAI a des tests simulés ; aucune exécution OpenAI réelle n’est validée, car la clé n’a pas encore été fournie. Voir le [rapport de validation daté](VALIDATION.md) avant de citer un taux de réussite. Ces résultats ne permettent pas d’annoncer un service prêt pour la production.
+| Fournisseur et modèle | Qualité métier | Parcours technique | Rapport |
+| --- | --- | --- | --- |
+| Ollama · `qwen2.5:3b` | 5/9 | 7/7 | [Mesure conservée](quality-2026-10-03.json) |
+| OpenAI · `gpt-5.6-terra` | 9/9 | 7/7 | [Nouvelle mesure](quality-2026-10-03-openai.json) |
+
+OpenAI est désormais activé avec une clé configurée et les appels sont réels. Les neuf cas métier prennent environ 1,5 à 4,1 secondes chacun sur ce passage. Les deux fournisseurs ont été évalués avec les mêmes attentes fixées à l’avance et les mêmes scripts ; les critères n’ont pas été assouplis. Les quatre échecs Ollama restent documentés : un extrait non attesté correctement bloqué, une demande vague considérée complète et deux demandes de précision inutiles.
+
+Les sept contrôles historiques de la première version restent une mesure distincte et n’annulent pas ses défauts de contenu. Le succès OpenAI porte sur ce corpus fictif de neuf cas, pas sur tous les messages possibles. Google Sheets était désactivé pour ces essais. Voir le [rapport de validation daté](VALIDATION.md) avant de citer un taux de réussite ; ces résultats ne permettent pas d’annoncer un service prêt pour la production.
 
 ## Limites à expliquer en entretien
 
