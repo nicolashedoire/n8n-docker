@@ -1,6 +1,6 @@
 # L’Atelier n8n — qualification IA des demandes
 
-Un atelier local pour montrer comment une demande de contact devient un brouillon contrôlé et relu par une personne. **n8n orchestre le traitement, Ollama exécute le modèle sur le Mac, SQLite conserve les dossiers et Google Sheets peut recevoir une copie de suivi.**
+Un atelier pour montrer comment une demande de contact devient un brouillon contrôlé et relu par une personne. **n8n orchestre le traitement ; un service local appelle le fournisseur IA choisi, OpenAI ou Ollama ; SQLite conserve les dossiers ; Google Sheets peut recevoir une copie de suivi.**
 
 Aucun email n’est envoyé. Le projet est un prototype de démonstration avec des données fictives. Le workflow historique et l’exemple d’initiation sont conservés ; la qualification IA utilise un workflow distinct.
 
@@ -10,24 +10,37 @@ Aucun email n’est envoyé. Le projet est un prototype de démonstration avec d
 flowchart LR
   F[Formulaire ou tableau de démonstration] --> N[Normaliser et vérifier]
   N --> R[Réserver dans SQLite]
-  R -->|Nouvelle demande| L[Qualifier avec Ollama]
+  R -->|Nouvelle demande| L[Extraire les faits avec IA]
   R -->|Doublon| X[Retourner le dossier existant]
-  L --> V[Valider le JSON ou contenir l’erreur]
-  V --> S[Enregistrer dans SQLite]
+  L --> V[Valider les faits et leurs sources]
+  V --> Q[Appliquer les règles de qualification]
+  Q --> B[Composer le brouillon]
+  B --> S[Enregistrer dans SQLite]
   S --> G[Copie Sheets facultative]
   S --> H[Relecture dans le tableau local]
   H --> D[Approuver ou rejeter]
 ```
 
-Le modèle propose une catégorie, un résumé, les informations manquantes et un brouillon. Il reçoit le texte de la demande, sans les champs nom et email ; une donnée personnelle déjà écrite dans ce texte lui reste transmise.
+Le modèle propose une catégorie et six faits sous forme d’extraits du message. n8n vérifie leurs sources, calcule les informations manquantes et compose le résumé et le brouillon avec des règles et gabarits explicites. Il reçoit le texte de la demande, sans les champs nom et email ; une donnée personnelle déjà écrite dans ce texte lui reste transmise.
+
+Cette version porte le marqueur **`facts-v2`**. Les anciens dossiers gardent leur résultat et leur version ; utiliser un nouvel identifiant pour évaluer le nouveau parcours. La comparaison des extraits tolère uniquement NFC, casse, espaces et apostrophes typographiques `‘`/`’` équivalentes à `'`. Elle n’accepte ni paraphrase ni nombre inventé. Voir [Qualité des réponses](docs/QUALITE.md).
 
 C’est un **workflow déterministe utilisant un LLM**. Le modèle n’a aucun outil et ne choisit pas les actions à exécuter. Les contrôles, la persistance et les décisions humaines appartiennent à l’application.
 
 ## Démarrer la démonstration
 
-Prérequis : macOS, Docker Desktop et Ollama installés. La démonstration normale utilise `qwen2.5:3b` en local. Les commandes de génération et de tests sur le Mac demandent Node.js 22.13 ou plus récent ; le service API s’exécute dans Docker.
+Prérequis : macOS et Docker Desktop. Les commandes de génération et de tests sur le Mac demandent Node.js 22.13 ou plus récent ; le service API s’exécute dans Docker. Choisir explicitement le fournisseur :
 
-1. Ouvrir **Start-Demo.command**, ou lancer `bash scripts/start-demo.sh` depuis ce dossier. Le script démarre les dépendances, vérifie le modèle et le télécharge s’il manque.
+| Configuration | Inférence | Préparation |
+| --- | --- | --- |
+| `LLM_PROVIDER=openai` | API OpenAI ; `OPENAI_MODEL=gpt-5.6-terra` par défaut, configurable | Lancer `bash scripts/configure-openai.sh` et saisir la clé dans son invite masquée. Le script crée la configuration locale et le fichier secret ignorés par Git. |
+| `LLM_PROVIDER=ollama` | Ollama sur le Mac ; `qwen2.5:3b` avec Compose fourni | Installer Ollama. Le démarrage vérifie et télécharge le modèle s’il manque. C’est aussi la valeur par défaut sans configuration. |
+
+Il n’y a **aucun basculement automatique** d’un fournisseur à l’autre. Pour revenir à Ollama, définir `LLM_PROVIDER=ollama` dans `.env.demo`, puis redémarrer. Avec OpenAI, le message est transmis à l’API distante ; la clé est lue par le service local et n’entre jamais dans l’export n8n. L’adaptateur utilise Responses API avec un schéma JSON strict. Le modèle choisi est documenté par [OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-terra) ; le [guide Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) explique le contrôle de forme, qui ne remplace pas les contrôles métier.
+
+**État au 3 octobre 2026 :** facts-v2 obtient 7/7 contrôles de parcours et **5/9 cas de qualité métier avec Ollama** ; quatre défauts restent documentés. L’adaptateur OpenAI est préparé et testé avec des réponses simulées ; la clé n’a pas encore été fournie et aucune exécution réelle OpenAI n’est validée. Le [rapport de validation](docs/VALIDATION.md) distingue les versions et les vérifications effectuées. Le prototype n’est pas présenté comme prêt pour une exploitation client.
+
+1. Ouvrir **Start-Demo.command**, ou lancer `bash scripts/start-demo.sh` depuis ce dossier. Le script démarre les dépendances du fournisseur choisi et vérifie la présence de sa configuration.
 2. Ouvrir [n8n](http://localhost:5678). À la première installation, créer le propriétaire local ; aucun abonnement n8n Cloud n’est nécessaire. Sur une instance existante, conserver son compte et ses données.
 3. Pour une première installation sans Google Sheets, lancer :
 
@@ -46,7 +59,7 @@ La version publique fonctionne sans Google Sheets : sa branche est désactivée 
 Pour démarrer uniquement les services Docker :
 
 ```bash
-docker compose -f compose.yaml -f compose.demo.yaml up -d --wait
+bash scripts/demo-compose.sh up -d --wait
 ```
 
 Pour l’initiation d’origine, utiliser `Start.command` et [Your first workflow](FIRST-WORKFLOW.md), conservé en anglais. `Start.command` et `Stop.command` pilotent n8n seul ; `Start-Demo.command` et Compose avec les deux fichiers prennent aussi en charge la qualification.
@@ -95,8 +108,8 @@ Le nœud effectue `appendOrUpdate` par `demande_id` en mode **RAW**, pour conser
 
 | Scénario | Comportement à observer |
 | --- | --- |
-| Demande complète | Appel réel à Ollama, analyse structurée, brouillon à relire |
-| Informations manquantes | Appel réel, précisions affichées, état `needs_info` si le modèle les identifie |
+| Demande complète | Appel réel au fournisseur configuré, faits vérifiés, brouillon à relire |
+| Informations manquantes | Appel réel, précisions affichées, état `needs_info` calculé depuis les faits requis absents |
 | Même identifiant et même contenu | Dossier existant, sans nouvel appel au modèle |
 | Même identifiant et contenu différent | Conflit ; ancien dossier conservé |
 | Panne API simulée | Trois tentatives HTTP maximum puis `technical_error` |
@@ -104,7 +117,7 @@ Le nœud effectue `appendOrUpdate` par `demande_id` en mode **RAW**, pour conser
 | Instruction malveillante | Appel réel, aucun outil d’action disponible ; contenu à contrôler humainement |
 | Approbation ou rejet | Décision dans le journal, aucun email envoyé |
 
-Les pannes injectées sont explicitement simulées. Un JSON conforme n’atteste pas l’exactitude du texte : classification et brouillon doivent être relus. **Nouvel identifiant** crée un nouveau test ; pour montrer un doublon, renvoyer les mêmes champs et le même scénario.
+Les pannes injectées sont explicitement simulées. Un JSON conforme n’atteste pas l’exactitude de la qualification : catégorie, faits et brouillon doivent être relus. **Nouvel identifiant** crée un nouveau test ; pour montrer un doublon, renvoyer les mêmes champs et le même scénario. Les métriques du dossier indiquent le fournisseur et le modèle effectivement utilisés.
 
 ## Fichiers et guides
 
@@ -112,17 +125,21 @@ Les pannes injectées sont explicitement simulées. Un JSON conforme n’atteste
 | --- | --- |
 | `compose.yaml` | n8n, stockage persistant et disponibilité |
 | `compose.demo.yaml` | API de qualification, tableau et volume SQLite |
+| `compose.openai.yaml`, `scripts/configure-openai.sh` | Montage du secret OpenAI et configuration locale |
 | `Start-Demo.command`, `scripts/start-demo.sh` | Démarrage de la démonstration |
 | `scripts/install-demo.sh` | Installation ou mise à jour explicite du workflow |
 | `workflows/01-hello.json` | Exemple d’initiation sans service externe |
 | `workflows/02-qualification-ia.json` | Export public sans référence privée |
 | `scripts/build-workflows.mjs` | Générateur du workflow |
-| `demo/server.mjs` | Réservation, contrat IA, Ollama, stockage et décisions |
+| `demo/server.mjs` | Réservation, extraction IA, vérification indépendante, stockage et décisions |
+| `demo/llm-provider.mjs` | Adaptateur OpenAI/Ollama, délais et erreurs du fournisseur |
+| `demo/qualification-policy.mjs` | Preuves textuelles, règles métier et gabarits intégrés dans les nœuds n8n |
 | `demo/public/index.html` | Soumission, revue et journal |
 | `demo/test/`, `scripts/test-workflow.mjs` | Tests du service et scénarios d’intégration |
 | [Conception](docs/CONCEPTION.md) | Besoin, choix et critères de réussite |
 | [Exploitation](docs/EXPLOITATION.md) | Configuration, reprises, sauvegarde et limites |
 | [Entretien](docs/ENTRETIEN.md) | Démonstration de 15 minutes et questions techniques |
+| [Qualité des réponses](docs/QUALITE.md) | Correction facts-v2, responsabilité du modèle et critères sémantiques |
 
 ## Vérifier
 
@@ -136,8 +153,11 @@ npm test
 # Afficher les cas d’intégration sans appel réseau.
 node scripts/test-workflow.mjs --dry-run
 
-# Essais réels : crée des demandes fictives dans l’instance locale.
-node scripts/test-workflow.mjs
+# Essais réels : crée des demandes fictives ; utiliser ollama pour le mode local.
+EXPECTED_PROVIDER=openai node scripts/test-workflow.mjs
+
+# Vérifier les faits, les questions et la voix du prestataire avec le vrai modèle.
+EXPECTED_PROVIDER=openai node scripts/test-quality.mjs
 
 # Exiger également une confirmation de synchronisation Sheets.
 WORKFLOW_TEST_REQUIRE_SHEETS=1 node scripts/test-workflow.mjs
@@ -145,7 +165,7 @@ WORKFLOW_TEST_REQUIRE_SHEETS=1 node scripts/test-workflow.mjs
 git diff --check
 ```
 
-Les tests du service couvrent notamment les doublons concurrents, le bail, le JSON, la décision humaine et les erreurs, avec des appels au modèle simulés. Ils ne prouvent pas une exécution complète dans n8n, Ollama et Sheets. Les commandes d’intégration ci-dessus sont un mode d’emploi ; elles ne constituent pas une affirmation de réussite sur une installation particulière.
+Les tests du service couvrent notamment les doublons concurrents, le bail, le JSON, la décision humaine et les erreurs, avec des appels au modèle simulés. Ils ne prouvent pas une exécution complète dans n8n, le fournisseur et Sheets. `EXPECTED_PROVIDER` vérifie le fournisseur attendu sans modifier sa configuration. Les commandes d’intégration ci-dessus sont un mode d’emploi ; elles ne constituent pas une affirmation de réussite sur une installation particulière.
 
 ## Données, arrêt et mises à jour
 
@@ -154,14 +174,14 @@ GitHub conserve les sources, guides et exports publics. Il ne sauvegarde pas le 
 Pour arrêter sans supprimer les données :
 
 ```bash
-docker compose -f compose.yaml -f compose.demo.yaml stop
+bash scripts/demo-compose.sh stop
 ```
 
 **Ne pas utiliser `docker compose down -v`** : `-v` supprime les volumes. Une réinitialisation de Docker Desktop peut aussi les effacer. Les [procédures de sauvegarde et restauration](docs/EXPLOITATION.md#sauvegarder-et-restaurer) incluent les deux volumes et la clé n8n.
 
 Pour changer le port n8n, copier `.env.example` dans `.env`, modifier `N8N_PORT`, puis relancer. L’image n8n est fixée par digest SHA-256 ; `docker compose pull` seul ne la met pas à niveau. Sauvegarder avant toute migration et suivre les notes de publication. Le retour à une ancienne version peut nécessiter une restauration.
 
-Les ports publiés sont liés à `127.0.0.1`. Le Mac doit rester allumé et éveillé, avec Docker et Ollama actifs. Le prototype n’offre ni authentification métier multi-utilisateur ni haute disponibilité. Pour les erreurs de connexion, modèle ou OAuth, consulter [Diagnostic](docs/EXPLOITATION.md#diagnostic).
+Les ports publiés sont liés à `127.0.0.1`. Le Mac doit rester allumé et éveillé, avec Docker actif. Ollama doit fonctionner en mode local ; OpenAI demande un accès réseau et une clé valide. Le prototype n’offre ni authentification métier multi-utilisateur ni haute disponibilité. Pour les erreurs de connexion, modèle ou OAuth, consulter [Diagnostic](docs/EXPLOITATION.md#diagnostic).
 
 ## Références
 

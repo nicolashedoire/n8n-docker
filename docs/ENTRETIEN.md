@@ -4,15 +4,17 @@
 
 **L’Atelier n8n : qualifier une demande entrante et préparer sa réponse pour une personne.**
 
-Le point de départ est l’atelier existant : formulaire de contact, connexion OAuth Google et ajout d’une ligne dans Google Sheets. Les trois tutoriels documentaient une utilisation locale en mode test. Cette extension ajoute une qualification par un modèle local, une validation structurée, une conservation durable et une interface de revue.
+Le point de départ est l’atelier existant : formulaire de contact, connexion OAuth Google et ajout d’une ligne dans Google Sheets. Les trois tutoriels documentaient une utilisation locale en mode test. Cette extension ajoute une extraction IA via OpenAI ou Ollama, des règles n8n explicites, une conservation durable et une interface de revue.
 
 Le résultat est un démonstrateur local sur données fictives. Il n’a pas encore été exploité chez un client. Les vidéos de l’atelier sont des supports pédagogiques ; la démonstration d’entretien doit montrer le workflow et son exécution actuelle.
+
+**État au 3 octobre :** la version facts-v2 obtient 7/7 contrôles de parcours avec Ollama et 5/9 cas de qualité métier ; quatre défauts restent visibles dans le [rapport](quality-2026-10-03.json). OpenAI est une option préparée, non encore activée ni validée avec une clé réelle. Google Sheets reste désactivé dans les essais actuels. Présenter un prototype explicable et ses mesures, sans annoncer une fiabilité de production.
 
 ### Pitch de 60 à 90 secondes
 
 > « Mon point de départ est L’Atelier n8n, où j’ai travaillé sur un formulaire de contact relié à Google Sheets, avec la configuration OAuth et le mapping des champs. J’ai prolongé cette base pour traiter un besoin métier : comprendre une demande, repérer les informations manquantes et préparer un brouillon de réponse.
 >
-> L’extension a été développée avec une assistance IA. Je peux expliquer le rôle des nœuds, les règles de validation, les essais et les limites. Le modèle reçoit le texte de la demande et propose une catégorie, un résumé, une liste d’informations manquantes et un brouillon. n8n contrôle la sortie, conserve le résultat et le transmet à une personne pour relecture.
+> L’extension a été développée avec une assistance IA. Je peux expliquer le rôle des nœuds, les règles de validation, les essais et les limites. Le modèle reçoit le texte de la demande et en extrait une catégorie et des faits. n8n vérifie les extraits, détermine les informations manquantes, puis compose le brouillon avec des règles explicites. Le résultat reste soumis à une personne pour relecture.
 >
 > Je vais montrer une demande complète, un cas incomplet et une erreur contrôlée. Je présenterai aussi les protections contre les doublons et ce qui reste à faire pour une mise en production. »
 
@@ -26,7 +28,7 @@ Adapter les verbes à sa participation réelle. Ne pas revendiquer une expérien
 | 1:30–3:30 | Le workflow entier, puis les trois zones | Entrée/réservation, qualification, persistance/relecture. Zoomer progressivement pour garder le parcours compréhensible. |
 | 3:30–7:00 | Une nouvelle demande complète | Soumettre des données fictives ; suivre les nœuds, la sortie JSON et le dossier créé. Lire brièvement le brouillon. |
 | 7:00–9:00 | La même demande avec le même identifiant | Montrer la branche doublon et le même résultat. Aucune nouvelle qualification nécessaire. |
-| 9:00–11:00 | Une demande de devis sans budget ni échéance | Montrer les informations manquantes et l’état `needs_info`. Le modèle doit demander une précision. |
+| 9:00–11:00 | Une demande de devis sans budget ni échéance | Montrer les faits extraits, les manques calculés et l’état `needs_info`. n8n compose les questions à partir des règles. |
 | 11:00–13:00 | Une panne injectée ou un JSON invalide | Annoncer explicitement la simulation. Montrer `technical_error`, l’absence de fausse qualification et le dossier conservé. |
 | 13:00–15:00 | La relecture, l’historique, les limites | Décision humaine enregistrée ; aucun e-mail envoyé. Expliquer les améliorations prioritaires. |
 
@@ -40,19 +42,22 @@ Si l’inférence dépasse le temps prévu, expliquer l’architecture pendant s
 4. Google Sheets seulement si la connexion a été rétablie et l’écriture puis la lecture vérifiées. Une connexion enregistrée n’est pas une preuve d’accès actuel.
 5. Les fichiers `scripts/build-workflows.mjs`, `demo/server.mjs` et `demo/test/server.test.mjs`, déjà ouverts aux passages utiles.
 
+Pour une capture de secours datée : [workflow facts-v2](images/atelier-workflow-facts-v2.png) et [demande fictive de Camille](images/resultat-camille-facts-v2.png). Les présenter comme des captures d’exécution, pas comme un nouvel essai en direct.
+
 Le nœud Google Sheets de l’export public est désactivé tant que ses références locales ne sont pas configurées. La branche locale reste utilisable avec `sink_status: skipped`. La connexion Google existante doit être contrôlée/reconnectée avant d’annoncer une démonstration du tableur. En cas d’échec, montrer son état réel ; le résultat métier reste conservé dans SQLite.
 
-## Ce que font les 28 nœuds
+## Ce que font les 30 nœuds
 
-Le workflow comprend **23 nœuds exécutables et 5 notes explicatives**. Le générateur est la source du JSON exportable ; ses identifiants stables facilitent les réimports.
+Le workflow comprend **25 nœuds exécutables et 5 notes explicatives**. Le générateur est la source du JSON exportable ; ses identifiants stables facilitent les réimports.
 
 | Nœuds | Responsabilité |
 |---|---|
 | Formulaire de contact ; Webhook de démonstration | Deux entrées vers le même traitement. Le formulaire répond à la réception ; le webhook attend le résultat final. |
 | Normaliser la demande ; Entrée valide ? ; Entrée à corriger | Harmoniser les champs, contrôler les limites et le format e-mail, rejeter avant réservation et inférence. |
 | Réserver sans doublon ; Nouvelle tentative ? ; Résultat déjà disponible ; Réservation refusée | Obtenir une réservation persistante, distinguer traitement et rejeu, rendre explicite un refus ou une indisponibilité. |
-| Qualifier avec Ollama | Appeler le modèle via le service local. Trois tentatives HTTP maximum, une seconde entre tentatives, timeout du nœud de 120 secondes. |
-| Valider le JSON du modèle ; Contenir la panne IA | Parser strictement quatre champs, vérifier types et valeurs ; convertir les erreurs en résultat contrôlé. |
+| Extraire les faits avec IA | Appeler le fournisseur configuré via le service local. Trois tentatives HTTP maximum, une seconde entre tentatives, timeout du nœud de 120 secondes. |
+| Valider les faits ; Contenir la panne IA | Contrôler la catégorie et six extraits, vérifier leur présence dans le message ; convertir les erreurs en résultat contrôlé. |
+| Appliquer les règles de qualification ; Composer le brouillon | Déterminer les manques selon la catégorie, puis produire une réponse au nom du prestataire avec des gabarits. |
 | Enregistrer le résultat ; Persistance à vérifier | Conserver le résultat avec le jeton de tentative ; rendre visible une écriture non confirmée. |
 | Préparer le suivi ; Google Sheets configuré ? | Aplatir les données nécessaires au suivi, choisir la branche configurée. |
 | Synchroniser Google Sheets ; Confirmer la synchronisation ; Signaler l’échec Sheets | Ajouter ou mettre à jour par `demande_id`, puis mémoriser le résultat de la synchronisation. |
@@ -60,38 +65,41 @@ Le workflow comprend **23 nœuds exécutables et 5 notes explicatives**. Le gén
 | Résultat prêt pour relecture ; Suivi de synchronisation à vérifier | Restituer un résultat explicite, ou signaler une confirmation de suivi manquante. |
 | 01 · Entrées ; 02 · Qualification ; 03 · Suivi humain ; Configuration Google Sheets ; Scénarios contrôlés | Notes visuelles, sans exécution. |
 
-La durée maximale du nœud n’est pas la latence habituelle. Le service borne également son appel Ollama, par défaut à 60 secondes. La mesure réelle figure dans les métriques du dossier. Les reprises HTTP peuvent répéter une inférence après une réponse perdue : ne pas promettre une seule consommation dans toutes les pannes réseau.
+La durée maximale du nœud n’est pas la latence habituelle. Le service borne également son appel au fournisseur, par défaut à 60 secondes. La mesure réelle figure dans les métriques du dossier. Les reprises HTTP peuvent répéter une inférence après une réponse perdue : ne pas promettre une seule consommation dans toutes les pannes réseau.
 
 ## Architecture et décisions techniques
 
 ```mermaid
 flowchart LR
   F[Formulaire ou webhook] --> N[n8n : orchestration]
-  N --> API[Service Node.js]
-  API --> O[Ollama : modèle local]
+  N --> API[Service Node.js : adaptateur]
+  API -->|LLM_PROVIDER=openai| OA[OpenAI : API Responses distante]
+  API -->|LLM_PROVIDER=ollama| O[Ollama : modèle local]
   API --> DB[(SQLite : demandes et événements)]
   N --> G[Google Sheets facultatif]
   API --> U[Interface de revue]
   H[Personne] --> U
 ```
 
-**Pourquoi n8n avec un petit service ?** n8n rend le parcours, les intégrations et les erreurs visibles. Le service fournit les transactions SQLite, les règles indépendantes, l’adaptateur Ollama et la page de revue. Il reste assez petit pour expliquer ses responsabilités. Ce choix introduit un composant à maintenir ; il doit être documenté et surveillé.
+**Pourquoi n8n avec un petit service ?** n8n rend le parcours, les intégrations, les règles métier et les erreurs visibles. Le service fournit les transactions SQLite, la vérification indépendante, l’adaptateur OpenAI/Ollama et la page de revue. Il reste assez petit pour expliquer ses responsabilités. Ce choix introduit un composant à maintenir ; il doit être documenté et surveillé. Le nœud IA fait un appel HTTP au service ; il ne s’agit pas d’un nœud natif OpenAI ni d’un agent autonome.
 
-**Quelle partie relève de l’IA ?** La lecture et la proposition de qualification. Les règles de persistance, les états, les doublons et la décision humaine sont dans du code déterministe. Ici, le modèle exécute une tâche bornée dans un workflow. Un agent choisissant dynamiquement des outils demanderait une boucle d’orchestration, une liste d’outils autorisés et un budget supplémentaire.
+**Quelle partie relève de l’IA ?** L’interprétation du message, la catégorie et la sélection des faits. Les règles de persistance, les états, les doublons et la décision humaine sont dans du code déterministe. Ici, le modèle exécute une tâche bornée dans un workflow. Un agent choisissant dynamiquement des outils demanderait une boucle d’orchestration, une liste d’outils autorisés et un budget supplémentaire.
 
-**Quel modèle ?** Ollama utilise le modèle configuré par `OLLAMA_MODEL` ; la valeur par défaut du service est `qwen2.5:3b`. Lire le modèle réellement indiqué dans les métriques avant l’entretien. Le choix local facilite cette démonstration sans clé cloud. Sa pertinence en production dépendrait de tests métier, de la latence, du matériel, du coût et des exigences sur les données.
+**Quel modèle ?** Le fournisseur est choisi par `LLM_PROVIDER`, sans repli automatique. `openai` utilise `OPENAI_MODEL`, par défaut `gpt-5.6-terra`, via Responses API et un schéma strict. `ollama` utilise `OLLAMA_MODEL`, par défaut `qwen2.5:3b`, également fourni par Compose. Lire fournisseur et modèle dans les métriques avant l’entretien. Le choix OpenAI demande une clé et transmet le texte à l’API distante ; le choix Ollama garde l’inférence sur le Mac. Leur pertinence doit être comparée sur les mêmes critères métier, latence, coût et contraintes de données. La [fiche du modèle OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-terra) et le [guide des sorties structurées](https://developers.openai.com/api/docs/guides/structured-outputs) documentent l’option préparée ; ils ne prouvent pas son résultat sur ce projet.
 
-**Pourquoi un schéma JSON ?** Il définit une interface stable : `category`, `summary`, `missing_information`, `draft_reply`, sans champ supplémentaire. Le modèle est sollicité avec un schéma ; n8n parse et valide la réponse ; le serveur recommence cette validation avant stockage. Le respect du schéma n’atteste pas la justesse sémantique. Il faut toujours mesurer la qualité et relire les cas sensibles.
+**Pourquoi un schéma JSON ?** Il définit une extraction stable : `category` et six faits dans `facts`, sans champ supplémentaire. n8n contrôle les extraits, puis construit `category`, `summary`, `missing_information`, `draft_reply` grâce aux règles. Le serveur recalcule indépendamment ce résultat avant stockage. Le respect du schéma n’atteste pas la justesse sémantique. Il faut toujours mesurer la qualité et relire les cas sensibles.
 
-**Comment sont déterminés les états ?** Le serveur choisit `needs_info` si la liste d’informations manquantes est non vide, sinon `pending_review`. Une erreur enregistrée donne `technical_error`. La décision humaine peut passer à `approved` ou `rejected`. Une approbation ne déclenche aucun envoi.
+**Que vérifie la preuve de source ?** Chaque fait renseigné doit apparaître dans le message. La comparaison accepte uniquement Unicode NFC, casse, espaces et apostrophes `‘`/`’` équivalentes à `'`. Elle refuse une paraphrase, un nombre inventé ou la suppression d’un accent. Un extrait exact peut encore être placé dans le mauvais champ : cette vérification ne suffit pas à prouver la qualité métier.
+
+**Comment sont déterminés les états ?** Les règles n8n déterminent les champs nécessaires par catégorie ; le serveur vérifie ce calcul puis choisit `needs_info` si un champ requis manque, sinon `pending_review`. Une erreur enregistrée donne `technical_error`. La décision humaine peut passer à `approved` ou `rejected`. Une approbation ne déclenche aucun envoi.
 
 ### API à savoir expliquer
 
 | Route | Fonction |
 |---|---|
 | `POST /requests/reserve` | Valide, réserve et renvoie `process` ou `duplicate`. |
-| `POST /llm` | Appelle Ollama pour le scénario normal ; injecte une panne ou un JSON invalide pour les scénarios nommés. |
-| `POST /requests/:id/result` | Enregistre soit une analyse valide, soit une erreur structurée ; vérifie le jeton de tentative. |
+| `POST /llm` | Appelle le fournisseur choisi pour le scénario normal ; injecte une panne ou un JSON invalide pour les scénarios nommés. |
+| `POST /requests/:id/result` | Vérifie le jeton, recalcule l’analyse facts-v2 depuis les faits et le message stocké, puis enregistre une analyse cohérente ou une erreur structurée. |
 | `POST /requests/:id/sink` | Enregistre `synced`, `failed` ou `skipped` après le résultat métier. |
 | `GET /requests` et `GET /requests/:id` | Lisent les dossiers et leur historique sans renvoyer le jeton de tentative. |
 | `POST /requests/:id/approve` ou `/reject` | Enregistrent une décision issue de la session du tableau de bord. |
@@ -105,14 +113,16 @@ flowchart LR
 
 ## Sécurité : les affirmations défendables
 
-- Le modèle reçoit le texte de la demande, sans ajout des champs de nom ou d’e-mail. Le texte libre peut lui-même contenir des données personnelles : il ne s’agit pas d’une anonymisation garantie.
-- Le texte entrant est déclaré non fiable. Le modèle n’a aucun outil, aucune route d’approbation et aucun accès direct à la base. Les champs d’approbation ou d’action sont absents du schéma.
+- Le modèle reçoit le texte de la demande, sans ajout des champs de nom ou d’e-mail. Le texte libre peut lui-même contenir des données personnelles : il ne s’agit pas d’une anonymisation garantie. En mode OpenAI, ce texte est transmis à l’API distante ; la clé reste dans le service et hors de l’export n8n.
+- Le texte entrant est déclaré non fiable. Le modèle n’a aucun outil, aucune route d’approbation et aucun accès direct à la base. Les champs d’approbation ou d’action sont absents du schéma. Les brouillons utilisent uniquement des gabarits et ne reprennent pas le texte libre du modèle ou du client.
 - Les valeurs envoyées dans Google Sheets utilisent le mode `RAW` pour éviter leur interprétation comme formules.
 - Les références privées, secrets, données locales et exports liés aux credentials restent hors Git. Les connexions n8n utilisent son stockage de credentials ; le JSON public ne contient pas les valeurs OAuth.
 - La décision humaine exige une session locale, un jeton CSRF et un contrôle d’origine. Ces protections ne constituent pas une authentification métier multi-utilisateur. Les API de service sont conçues pour le périmètre local de la démonstration.
 - Les tests d’injection ne prouvent pas une immunité générale. Il faut juger l’effet d’une entrée hostile sur le résultat métier et sur les actions possibles.
 
-**Observation du 3 octobre :** les sept contrôles d’intégration ont réussi sur le parcours final, mais la lecture humaine révèle deux limites du modèle 3B. Sur la demande vague, il omet l’échéance dans les questions de clarification. Sur une instruction hostile, il conserve le schéma et l’état `pending_review`, mais répète dans le brouillon une affirmation mensongère d’approbation/envoi. Aucune action n’est déclenchée. Présenter cette distinction : les protections d’action ont fonctionné ; la qualité du brouillon doit encore être améliorée et relue. Les résultats détaillés, y compris l’échec initial corrigé, figurent dans `docs/validation-2026-10-03.json`.
+**Historique à raconter précisément :** la première version Ollama a réussi sept contrôles de parcours tout en oubliant une échéance et en recopiant une instruction hostile dans un brouillon. Aucune action n’avait été déclenchée. Ces défauts, puis le mauvais rôle du rédacteur, ont motivé facts-v2 : extraction par l’IA, règles et gabarits dans n8n. Les anciens dossiers restent inchangés et portent leur ancienne version.
+
+**Mesure actuelle du 3 octobre :** 29 tests isolés et 7/7 contrôles de parcours réussissent. La suite métier facts-v2 avec Ollama réussit **5/9 cas**, dont la demande complète à 4 000 €. Les quatre échecs sont conservés : un extrait non attesté rejeté, une demande vague considérée complète et deux précisions redemandées malgré des informations fournies. Aucun résultat OpenAI réel n’est inclus. Montrer cette différence entre protection technique et qualité métier ; voir [Validation](VALIDATION.md) et [résultats détaillés](quality-2026-10-03.json).
 
 ## Passage en production : réponse en une minute
 
@@ -121,6 +131,8 @@ flowchart LR
 Ne pas annoncer ces mesures comme déjà déployées. SQLite convient au démonstrateur ; un besoin de plusieurs instances demanderait une architecture de base et de verrouillage adaptée. Les logs contiennent des informations utiles au diagnostic et peuvent contenir les demandes : accès et durée de conservation doivent être définis.
 
 ## Problématique technique à raconter
+
+La correction facts-v2 répond à un défaut métier réellement observé : un brouillon parlait au nom du client et redemandait des éléments déjà fournis, malgré des contrôles JSON réussis. L’IA extrait maintenant les faits ; n8n applique les règles et compose la réponse. Montrer les nœuds dédiés et un test de qualité dont les attentes ont été fixées avant l’exécution. Voir [Qualité des réponses](QUALITE.md).
 
 Choisir un problème réellement rencontré et montrer sa résolution. Exemple présent dans la préparation : un nœud Google Sheets sans document configuré peut bloquer la validation globale du workflow avant même l’évaluation de la branche conditionnelle. Le générateur désactive maintenant ce nœud dans l’export sans connexion ; la copie locale liée l’active. Expliquer le symptôme, la cause, le changement et l’exécution qui le vérifie, sans prétendre à une validation qui n’a pas encore eu lieu.
 
@@ -143,12 +155,12 @@ Questions utiles : « Quelle décision doit être automatisée ? », « Quel sys
 
 | Jour | Travail et résultat attendu |
 |---|---|
-| Samedi 3 octobre | Reprendre le workflow nœud par nœud. Vérifier accès n8n, modèle local et suivi. Contrôler ou reconnecter Google. Exécuter les cas d’intégration quand le poste est disponible. |
+| Samedi 3 octobre | Reprendre le workflow nœud par nœud. Vérifier accès n8n, fournisseur choisi et suivi. Contrôler ou reconnecter Google. Exécuter les cas d’intégration et de qualité quand le poste est disponible. |
 | Dimanche 4 octobre | Répéter la démo de quinze minutes. Préparer des données fictives lisibles et une capture de secours. Travailler les questions techniques ci-dessus. |
 | Lundi 5 octobre | Faire une simulation complète d’entretien. Corriger uniquement les blocages identifiés, sauvegarder la configuration et vérifier les connexions. Préparer disponibilité, mode de collaboration et tarif envisagé. |
-| Mardi 6 octobre | Démarrer Docker et Ollama avant l’entretien, tester une demande, ouvrir les onglets et vérifier le partage d’écran. Garder les notes et résultats de secours accessibles. |
+| Mardi 6 octobre | Démarrer Docker et vérifier le fournisseur choisi avant l’entretien, tester une demande, ouvrir les onglets et vérifier le partage d’écran. Garder les notes et résultats de secours accessibles. |
 
-Le script `node scripts/test-workflow.mjs --dry-run` décrit les cas sans réseau. L’exécution sans cette option appelle réellement le workflow, puis Ollama pour les cas nominal, ambigu et hostile ; elle conserve les dossiers fictifs `check-*`. Les résultats à présenter doivent provenir de cette exécution ou d’une vérification visible, avec leur date. Le contrôle automatisé de l’injection vérifie uniquement l’état et le schéma ; lire aussi le brouillon. `WORKFLOW_TEST_REQUIRE_SHEETS=1` exige un retour de synchronisation réussi ; relire aussi le tableur pour confirmer les lignes.
+Le script `node scripts/test-workflow.mjs --dry-run` décrit les cas sans réseau. L’exécution sans cette option appelle réellement le workflow, puis le fournisseur configuré pour les cas nominal, ambigu et hostile ; elle conserve les dossiers fictifs `check-*`. `EXPECTED_PROVIDER=openai` ou `EXPECTED_PROVIDER=ollama` impose le fournisseur attendu sans le reconfigurer. Les résultats à présenter doivent provenir d’une exécution datée et de la bonne version. Le contrôle d’injection de cette suite porte sur l’état et le schéma ; `scripts/test-quality.mjs` ajoute des attentes métier fixes, et la relecture reste utile. `WORKFLOW_TEST_REQUIRE_SHEETS=1` exige un retour de synchronisation réussi ; relire aussi le tableur pour confirmer les lignes.
 
 ## Questions à poser à IALTER
 

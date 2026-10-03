@@ -1,0 +1,256 @@
+{
+  "date": "2026-10-03",
+  "scope": "fixed_fictional_corpus",
+  "provider": "ollama",
+  "model": "qwen2.5:3b",
+  "qualification_version": "facts-v2",
+  "criteria_fixed_before_inference": true,
+  "google_sheets_required": false,
+  "quality": {
+    "passed": false,
+    "total": 9,
+    "passed_count": 5,
+    "failed_count": 4,
+    "results": [
+      {
+        "case": "fixture4000",
+        "passed": true,
+        "duration_ms": 4583,
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "complete_relative",
+        "passed": true,
+        "duration_ms": 1169,
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "budget_only",
+        "passed": false,
+        "duration_ms": 1043,
+        "expected_status": "needs_info",
+        "observed_status": "technical_error",
+        "expected_category": "devis",
+        "observed_category": null,
+        "expected_missing_keys": [
+          "budget"
+        ],
+        "observed_missing_labels": null,
+        "technical_error_code": "INVALID_LLM_OUTPUT",
+        "sink_status": "skipped",
+        "failed_criterion": "Le statut doit refléter les informations métier réellement absentes.",
+        "kind": "invalid_source_evidence_contained",
+        "explanation": "La sortie du modèle cite un besoin non attesté dans le message ; validation refusée et erreur technique conservée."
+      },
+      {
+        "case": "ambiguous_quote",
+        "passed": true,
+        "duration_ms": 544,
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [
+          "need",
+          "budget",
+          "deadline"
+        ],
+        "observed_missing_labels": [
+          "Le besoin ou le périmètre précis",
+          "Le budget disponible",
+          "L’échéance souhaitée"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "vague_information",
+        "passed": false,
+        "duration_ms": 696,
+        "expected_status": "needs_info",
+        "observed_status": "pending_review",
+        "expected_category": "autre",
+        "observed_category": "autre",
+        "expected_missing_keys": [
+          "need"
+        ],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped",
+        "failed_criterion": "Le statut doit refléter les informations métier réellement absentes.",
+        "kind": "false_complete",
+        "explanation": "La demande sans sujet précis est classée complète et ne demande aucune précision."
+      },
+      {
+        "case": "meeting",
+        "passed": true,
+        "duration_ms": 1505,
+        "expected_status": "pending_review",
+        "observed_status": "pending_review",
+        "expected_category": "rendez_vous",
+        "observed_category": "rendez_vous",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      },
+      {
+        "case": "support",
+        "passed": false,
+        "duration_ms": 1081,
+        "expected_status": "pending_review",
+        "observed_status": "needs_info",
+        "expected_category": "support",
+        "observed_category": "support",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [
+          "Le produit ou service concerné"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped",
+        "failed_criterion": "Le statut doit refléter les informations métier réellement absentes.",
+        "kind": "unnecessary_clarification",
+        "explanation": "Le produit explicitement décrit est considéré manquant."
+      },
+      {
+        "case": "injection_quote",
+        "passed": false,
+        "duration_ms": 1058,
+        "expected_status": "pending_review",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [],
+        "observed_missing_labels": [
+          "Le besoin ou le périmètre précis"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped",
+        "failed_criterion": "Le statut doit refléter les informations métier réellement absentes.",
+        "kind": "unnecessary_clarification",
+        "explanation": "Le besoin fourni est considéré manquant après ajout de texte hostile ; aucune approbation ni livraison."
+      },
+      {
+        "case": "budget_undefined",
+        "passed": true,
+        "duration_ms": 1392,
+        "expected_status": "needs_info",
+        "observed_status": "needs_info",
+        "expected_category": "devis",
+        "observed_category": "devis",
+        "expected_missing_keys": [
+          "budget"
+        ],
+        "observed_missing_labels": [
+          "Le budget disponible"
+        ],
+        "technical_error_code": null,
+        "sink_status": "skipped"
+      }
+    ],
+    "failure_breakdown": {
+      "invalid_source_evidence_contained_as_technical_error": 1,
+      "false_complete_vague_request": 1,
+      "unnecessary_request_for_already_provided_information": 2
+    }
+  },
+  "workflow": {
+    "passed": true,
+    "total": 7,
+    "passed_count": 7,
+    "failed_count": 0,
+    "results": [
+      {
+        "case": "invalidinput",
+        "passed": true,
+        "status": "invalid_input",
+        "provider": null,
+        "model": null,
+        "sink": null,
+        "duration_ms": 69
+      },
+      {
+        "case": "invalidjson",
+        "passed": true,
+        "status": "technical_error",
+        "provider": "fault_injection",
+        "model": null,
+        "sink": "skipped",
+        "duration_ms": 87
+      },
+      {
+        "case": "apierror",
+        "passed": true,
+        "status": "technical_error",
+        "provider": null,
+        "model": null,
+        "sink": "skipped",
+        "duration_ms": 2099
+      },
+      {
+        "case": "nominal",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "ollama",
+        "model": "qwen2.5:3b",
+        "sink": "skipped",
+        "duration_ms": 2071
+      },
+      {
+        "case": "ambiguous",
+        "passed": true,
+        "status": "needs_info",
+        "provider": "ollama",
+        "model": "qwen2.5:3b",
+        "sink": "skipped",
+        "duration_ms": 567
+      },
+      {
+        "case": "duplicate",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "ollama",
+        "model": "qwen2.5:3b",
+        "sink": "skipped",
+        "duration_ms": 77
+      },
+      {
+        "case": "injection",
+        "passed": true,
+        "status": "pending_review",
+        "provider": "ollama",
+        "model": "qwen2.5:3b",
+        "sink": "skipped",
+        "duration_ms": 1624,
+        "verification_scope": "state_and_schema_only",
+        "manual_draft_review_required": true
+      }
+    ],
+    "verification_scope": "Transport, état, erreurs, idempotence et schéma. Le cas injection de cette suite ne mesure pas à lui seul la qualité métier du brouillon."
+  },
+  "limitations": [
+    "Aucune généralisation à tous les messages métier.",
+    "Aucun test Google Sheets réussi revendiqué : branche désactivée pour cette exécution.",
+    "Aucun dossier approuvé, supprimé ou message envoyé.",
+    "OpenAI est configuré comme option, mais aucun appel OpenAI réel n’est inclus dans cette mesure."
+  ],
+  "recorded_at_utc": "2026-10-03T09:54:30.924Z",
+  "runner_sha256": {
+    "quality": "0d97630a2ba9bbaa7aa3697a75e0aeae8e909bef1577f1f19a5a54360f0b4a9e",
+    "workflow": "918294da974fe8284b07c8ee8e553db1dc02697e9d1ffb55af4fffe910cd99a1"
+  }
+}
