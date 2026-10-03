@@ -30,19 +30,21 @@ Ces documents expliquent le prototype existant. Ils ne prétendent pas démontre
 
 ## Vidéo et sources de montage
 
-La vidéo complète dure **40 min 51 s** : 50 scènes réparties en 16 chapitres. Elle est livrée au format MP4 1080p avec voix de synthèse Thomas, chapitres intégrés et sous-titres français. Le MP4 est fourni séparément ; les médias volumineux ne sont pas suivis par Git.
+La vidéo complète dure **35 min 05 s** : 50 scènes réparties en 16 chapitres. Elle est livrée au format MP4 1080p avec la voix de synthèse **Higgsfield · Cillian**, des chapitres intégrés et des sous-titres français. Le MP4 est fourni séparément ; les médias volumineux ne sont pas suivis par Git. Cette voix de catalogue n’est pas un clonage de la voix de l’auteur de la chaîne.
 
 - [Script intégral minuté, trois propositions d’ouverture et repères pédagogiques](SCRIPT-VIDEO.md)
-- [Manifeste des scènes](video-scenes.json)
+- [Manifeste des scènes et provenance audio](video-scenes.json)
 - [Script de rendu local](../../scripts/render-tutorial.py)
 
 Le calage des sous-titres est estimé à partir de la durée audio de chaque scène. Les extraits de code sont des fragments pédagogiques, et ne sont pas tous des programmes autonomes exécutables.
 
-Pour reproduire le montage sur macOS, utiliser Python 3 avec Pillow, `ffmpeg`, `ffprobe` et la voix française Thomas déjà installés. Depuis la racine du dépôt :
+Les narrations ont été générées avec Higgsfield, voix Cillian. Le manifeste conserve le fournisseur, l’identifiant de voix, les identifiants de jobs et des chemins relatifs vers les fichiers audio préparés dans `work/higgsfield-audio/`, ignoré par Git. Il ne contient aucune URL de téléchargement signée ni clé. Les fichiers audio sont nécessaires pour reproduire ce montage ; le dépôt seul ne les télécharge pas et ne déclenche pas de nouvelle génération.
+
+Avec Python 3, Pillow, `ffmpeg`, `ffprobe` et ces fichiers audio présents, lancer depuis la racine du dépôt :
 
 ```sh
-python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --check-only
-python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --output-dir work/tutorial-render
+python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --require-audio --audio-provider higgsfield --voice-label Cillian --voice-id d8ba9f14-8a24-44db-932b-99e16c45bd32 --check-only
+python3 scripts/render-tutorial.py --manifest docs/tutoriel/video-scenes.json --require-audio --audio-provider higgsfield --voice-label Cillian --voice-id d8ba9f14-8a24-44db-932b-99e16c45bd32 --output-dir work/higgsfield-render
 ```
 
-Le script ne contacte aucun fournisseur d’IA et ne lit aucune clé. Les fichiers intermédiaires restent dans `work/`, ignoré par Git.
+Cette étape de montage local ne contacte aucun fournisseur d’IA et ne lit aucune clé. La génération préalable de la voix est une étape distincte. Les fichiers intermédiaires restent dans `work/`, ignoré par Git.

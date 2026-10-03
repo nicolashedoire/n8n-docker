@@ -5,6 +5,11 @@
     "title": "D’une demande à un brouillon vérifiable",
     "narration": "Une demande arrive avec un besoin, un budget et une date. Comment préparer une réponse utile, sans inventer les informations qui manquent ? Dans ce tutoriel de L’Atelier enne huit enne, nous allons suivre la demande de Camille à travers le workflow réel. Nous ouvrirons les étapes, lirons le code et expliquerons chaque décision. Le résultat attendu, c’est un dossier enregistré et un brouillon à relire. La personne garde la décision finale. La vidéo est un montage de captures du projet et d’extraits de son code, avec une voix de synthèse. Les captures de configuration servent à retrouver les réglages ; les captures de résultat proviennent de la démonstration enregistrée. Vous pouvez mettre en pause pour reproduire les manipulations. Le guide illustré dans Notion reprend le détail et les exercices corrigés.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/01-intro-resultat.wav",
+    "audio_job_id": "54957a32-479b-4e3b-8268-cd9bbabd8f04",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "19afec864c0cb32ee739b40726091a6437bf8ae58d6a6b9c84b9a478aada920e",
     "screenshot": "../images/resultat-camille-openai.png"
   },
   {
@@ -13,6 +18,11 @@
     "title": "Lire le parcours avant de lire le code",
     "narration": "Ouvrez le workflow Qualification IA des demandes dans l’éditeur enne huit enne. Il contient vingt-cinq nœuds exécutables et cinq notes explicatives. Les deux entrées se trouvent à gauche : un formulaire natif et un webhook. Elles rejoignent la normalisation, puis la réservation. Au centre, le modèle extrait des faits. Le code vérifie ces faits, applique les règles métier et compose la réponse. À droite, le résultat est enregistré puis éventuellement copié dans Google Sheets. La branche Sheets est actuellement désactivée, faute de connexion validée. La relecture fonctionne dans le tableau local. Les branches inférieures rendent visibles les refus et les erreurs. Ce projet est un workflow avec une étape d’intelligence artificielle. Le modèle ne choisit pas librement ses outils : le graphe fixe l’ordre des actions. Cette précision vous aidera à expliquer son architecture pendant l’entretien.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/02-intro-architecture.wav",
+    "audio_job_id": "515d5385-89b8-47e7-b912-90d0b3dc6c60",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "cb1f54596e08c40931bbd221ec2452fb85482ae4169e484ead13856dc5b68165",
     "screenshot": "../images/execution-n8n-openai.png"
   },
   {
@@ -25,7 +35,12 @@
       "Éditeur : localhost:5678",
       "Tableau : localhost:8787",
       "Parameters · Settings · Executions"
-    ]
+    ],
+    "audio": "../../work/higgsfield-audio/03-intro-ouvrir.wav",
+    "audio_job_id": "b68381c2-1daa-4336-9d71-0522bdcf2ba8",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "015d6f54ad1868982cff28ab649f13b64e56c3b63abf533f15097a824f0c57df"
   },
   {
     "id": "intro-items",
@@ -37,7 +52,12 @@
       "Une exécution = une demande",
       "Les expressions lisent les données"
     ],
-    "code": "const donnees = $input.first().json;\nreturn [{ json: donnees }];\n\n// Champ de configuration n8n\n={{ $json.input }}\n\n// Lire un nœud précédent\n$(\"Normaliser la demande\").first().json"
+    "code": "const donnees = $input.first().json;\nreturn [{ json: donnees }];\n\n// Champ de configuration n8n\n={{ $json.input }}\n\n// Lire un nœud précédent\n$(\"Normaliser la demande\").first().json",
+    "audio": "../../work/higgsfield-audio/04-intro-items.wav",
+    "audio_job_id": "0f95f420-9c48-4fae-997a-87199b3144ed",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "456ddb251aa83843413e050ed4db5a13b856ba303f003cd64ccd634a083813e9"
   },
   {
     "id": "capture-01-formulaire",
@@ -45,6 +65,11 @@
     "title": "Formulaire : retrouver les champs",
     "narration": "Dans l’éditeur, ouvrez Formulaire de contact par double clic. Le panneau Parameters contient le titre, les champs, leurs noms techniques et leur caractère obligatoire. Le panneau de droite affiche ici la configuration sans résultat de test. Nous allons maintenant relier ces réglages au comportement du formulaire.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/05-capture-01-formulaire.wav",
+    "audio_job_id": "1689dc05-e616-4b44-bb9b-5d42edf764e6",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "c8820d73f8c91a1e7fcfbbb90515314f91cbc9a39113f89c5f021aed4875dd07",
     "screenshot": "../images/tutoriel/01-formulaire.png"
   },
   {
@@ -57,10 +82,15 @@
       "Accusé de réception immédiat",
       "Même traitement que le webhook"
     ],
+    "code": "\"authentication\": \"none\",\n\"responseMode\": \"onReceived\",\n\"options\": {\n  \"path\": \"atelier-qualification-form\",\n  \"buttonLabel\": \"Transmettre ma demande\"\n}",
+    "audio": "../../work/higgsfield-audio/06-node-01.wav",
+    "audio_job_id": "f07ca9db-d6b4-42ce-8315-8bc8e2424462",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "f8232251b3ff2360dec64809e4a385690df3458034ee160e192fcba654fa0176",
     "covered_nodes": [
       "Formulaire de contact"
     ],
-    "code": "\"authentication\": \"none\",\n\"responseMode\": \"onReceived\",\n\"options\": {\n  \"path\": \"atelier-qualification-form\",\n  \"buttonLabel\": \"Transmettre ma demande\"\n}",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -73,10 +103,15 @@
       "Réponse à la fin de la branche",
       "Identifiant fourni pour les essais"
     ],
+    "code": "\"httpMethod\": \"POST\",\n\"path\": \"atelier-qualification\",\n\"responseMode\": \"lastNode\",\n\"responseData\": \"firstEntryJson\"",
+    "audio": "../../work/higgsfield-audio/07-node-02.wav",
+    "audio_job_id": "5ad0e0fe-742a-4688-a959-21ef46824db4",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "32edb76a55c5574169995cff208802ee08030090fe567ead1ac023b0ba422f8e",
     "covered_nodes": [
       "Webhook de démonstration"
     ],
-    "code": "\"httpMethod\": \"POST\",\n\"path\": \"atelier-qualification\",\n\"responseMode\": \"lastNode\",\n\"responseData\": \"firstEntryJson\"",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -85,6 +120,11 @@
     "title": "Normaliser : lire le nœud Code",
     "narration": "Voici le nœud Normaliser la demande. Le langage sélectionné est JavaScript et le mode traite l’ensemble des items. Le code lit cependant le premier item, conformément au contrat d’une seule demande. La prochaine carte agrandit les lignes essentielles et explique les opérateurs.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/08-capture-03-normaliser.wav",
+    "audio_job_id": "4fcce90a-ce1f-4335-a4e5-22469f1d11bd",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "f87e0add22057065ab4db91693c1803e99f5c240299e5e8d1c6c8a5849d0076e",
     "screenshot": "../images/tutoriel/03-normaliser.png"
   },
   {
@@ -97,10 +137,15 @@
       "Nettoyer sans réécrire le message",
       "Recopier uniquement les champs prévus"
     ],
+    "code": "const raw = $input.first().json;\nconst source = raw.body\n  && typeof raw.body === 'object'\n  && !Array.isArray(raw.body)\n  ? raw.body : raw;\nconst text = value =>\n  typeof value === 'string' ? value.trim() : '';",
+    "audio": "../../work/higgsfield-audio/09-node-03.wav",
+    "audio_job_id": "3096fcdc-1e6c-48f4-aecd-6913841d3e96",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "80ea7965ddfb615dcdb1d353b2bb1e08090a49a64d0b71891d40bcbc7d27fe66",
     "covered_nodes": [
       "Normaliser la demande"
     ],
-    "code": "const raw = $input.first().json;\nconst source = raw.body\n  && typeof raw.body === 'object'\n  && !Array.isArray(raw.body)\n  ? raw.body : raw;\nconst text = value =>\n  typeof value === 'string' ? value.trim() : '';",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -113,12 +158,17 @@
       "Un booléen pilote la branche",
       "Aucune inférence pour une saisie invalide"
     ],
+    "code": "if (!['normal', 'api_error', 'invalid_json']\n  .includes(input.scenario))\n  issues.push('Scénario inconnu.');\nreturn [{ json: {\n  valid: issues.length === 0,\n  input,\n  issues\n} }];",
+    "audio": "../../work/higgsfield-audio/10-node-04.wav",
+    "audio_job_id": "9e059a50-e149-4787-8f8d-592ddb34e997",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "6b10e2559b91397214604fbb18f2843e3f835864eb5d16c33bf6a904753e98d2",
     "covered_nodes": [
       "Normaliser la demande",
       "Entrée valide ?",
       "Entrée à corriger"
     ],
-    "code": "if (!['normal', 'api_error', 'invalid_json']\n  .includes(input.scenario))\n  issues.push('Scénario inconnu.');\nreturn [{ json: {\n  valid: issues.length === 0,\n  input,\n  issues\n} }];",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -127,6 +177,11 @@
     "title": "Réserver : inspecter la requête HTTP",
     "narration": "Ouvrez Réserver sans doublon. La méthode est POST. L’adresse qualification API désigne le service sur le réseau Docker, pas un domaine public. Le corps est envoyé en jéson. L’expression fournit les données normalisées. Regardons pourquoi cet appel vient avant le modèle.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/11-capture-06-reserver.wav",
+    "audio_job_id": "a23bf0f7-5c77-4ee4-b6fa-8de236c00383",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "00796780567f0f37d173cf9c87ef896034a13accc964ff932b97e37df71fcd3d",
     "screenshot": "../images/tutoriel/06-reserver.png"
   },
   {
@@ -139,11 +194,16 @@
       "Route process ou duplicate",
       "Jeton interne pour les écritures"
     ],
+    "code": "\"method\": \"POST\",\n\"url\": \"http://qualification-api:3000/requests/reserve\",\n\"sendBody\": true,\n\"specifyBody\": \"json\",\n\"jsonBody\": \"={{ $json.input }}\"",
+    "audio": "../../work/higgsfield-audio/12-node-05.wav",
+    "audio_job_id": "ba9f9b99-1577-4378-92d5-713b8fda912a",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "70dec8c19869d312848846571e46c3cc936402f96359e051007c9a62987389bc",
     "covered_nodes": [
       "Réserver sans doublon",
       "Nouvelle tentative ?"
     ],
-    "code": "\"method\": \"POST\",\n\"url\": \"http://qualification-api:3000/requests/reserve\",\n\"sendBody\": true,\n\"specifyBody\": \"json\",\n\"jsonBody\": \"={{ $json.input }}\"",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -156,11 +216,16 @@
       "Aucun nouvel appel IA ou Sheets",
       "Une réservation incertaine doit être examinée"
     ],
+    "code": "const response = $input.first().json;\n\n// Champs du résultat de doublon :\nok: true,\nroute: 'duplicate',\nrequest_id: response.request_id,\nrecord: response.record,",
+    "audio": "../../work/higgsfield-audio/13-node-06.wav",
+    "audio_job_id": "e5069e25-0636-45e8-9bf8-3cc406872308",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "2a08483c669e663f38a01eb7b0918f74ccfb0c94c3e2d10d23156d3f9f57d81c",
     "covered_nodes": [
       "Résultat déjà disponible",
       "Réservation refusée"
     ],
-    "code": "const response = $input.first().json;\n\n// Champs du résultat de doublon :\nok: true,\nroute: 'duplicate',\nrequest_id: response.request_id,\nrecord: response.record,",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -169,6 +234,11 @@
     "title": "Extraction : un appel au service",
     "narration": "Cette capture montre le nœud HTTP Extraire les faits avec IA. L’adresse se termine par la route LLM. La clé OpenAI n’apparaît pas dans ce nœud : le service conserve la configuration du fournisseur. Nous expliquons d’abord le contrat de l’appel, puis les contrôles de sa réponse.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/14-capture-10-extraire.wav",
+    "audio_job_id": "3c76d4e3-d0f3-4457-92b3-739624419637",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "834a0256cb84ea11252ff60b6ec038dc41b53ced2ab1fb172edbb2a96d002d87",
     "screenshot": "../images/tutoriel/10-extraire.png"
   },
   {
@@ -181,10 +251,15 @@
       "Trois tentatives au total",
       "Le texte retourné reste à valider"
     ],
+    "code": "\"method\": \"POST\",\n\"url\": \"http://qualification-api:3000/llm\",\n\"retryOnFail\": true,\n\"maxTries\": 3,\n\"waitBetweenTries\": 1000,\n\"options\": {\n  \"timeout\": 120000\n}",
+    "audio": "../../work/higgsfield-audio/15-node-07.wav",
+    "audio_job_id": "fdd36874-a3ea-49ca-89a3-e78ced7ff033",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "50fd0a1dfa7ab90966809ad2be01d945cb701c6ec373cf8589c167985a8a7fe0",
     "covered_nodes": [
       "Extraire les faits avec IA"
     ],
-    "code": "\"method\": \"POST\",\n\"url\": \"http://qualification-api:3000/llm\",\n\"retryOnFail\": true,\n\"maxTries\": 3,\n\"waitBetweenTries\": 1000,\n\"options\": {\n  \"timeout\": 120000\n}",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -193,6 +268,11 @@
     "title": "Validation : ouvrir la fonction réelle",
     "narration": "Dans Valider les faits, la fonction JavaScript est directement visible. Elle a été copiée automatiquement par le générateur depuis le module de politique du projet. Le service réutilise la même fonction. Cette organisation évite de maintenir à la main deux définitions divergentes des règles.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/16-capture-11-valider.wav",
+    "audio_job_id": "e349752c-f862-48c3-8a12-ae6b796490f0",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "27fc43f4acd0dad600bd2649adf036d5345a0a208b70bf5cd68fdfa443632228",
     "screenshot": "../images/tutoriel/11-valider.png"
   },
   {
@@ -205,10 +285,15 @@
       "Exiger les six faits et la catégorie",
       "Conserver une erreur au lieu de simuler un succès"
     ],
+    "code": "out.extraction = validateExtraction(\n  JSON.parse(response.text),\n  $('Normaliser la demande').first().json.input.message\n);",
+    "audio": "../../work/higgsfield-audio/17-node-08.wav",
+    "audio_job_id": "6cebafcc-a059-403c-9673-bf5e8593f970",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "bd0ed3a175bedf08aa1631fe4c563a8307caec7f9ac7a69030150e32c3cbcbbb",
     "covered_nodes": [
       "Valider les faits"
     ],
-    "code": "out.extraction = validateExtraction(\n  JSON.parse(response.text),\n  $('Normaliser la demande').first().json.input.message\n);",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -221,10 +306,15 @@
       "Normalisation typographique limitée",
       "Provenance textuelle ≠ pertinence métier"
     ],
+    "code": "const canonical = value => value\n  .normalize('NFC')\n  .replace(/[‘’]/gu, \"'\")\n  .replace(/\\s+/gu, ' ')\n  .trim()\n  .toLowerCase();\n\nif (normalized &&\n    !message.includes(canonical(normalized)))",
+    "audio": "../../work/higgsfield-audio/18-node-09.wav",
+    "audio_job_id": "967183b3-742e-430e-8ad9-6ef3cac3d236",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "2d8fb7c8dc57cfc67e1238c03592dfe8b5d9507c03fcabd490a1055762908240",
     "covered_nodes": [
       "Valider les faits"
     ],
-    "code": "const canonical = value => value\n  .normalize('NFC')\n  .replace(/[‘’]/gu, \"'\")\n  .replace(/\\s+/gu, ' ')\n  .trim()\n  .toLowerCase();\n\nif (normalized &&\n    !message.includes(canonical(normalized)))",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -233,6 +323,11 @@
     "title": "Qualification : rendre les règles visibles",
     "narration": "Le nœud Appliquer les règles de qualification expose les champs requis par catégorie. Les tableaux au début de la fonction permettent de retrouver les exigences métier. Nous allons expliquer leur rôle, puis le calcul des informations manquantes. Ces règles restent modifiables selon le besoin du client.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/19-capture-12-regles.wav",
+    "audio_job_id": "6a07faa5-37ed-4de4-854e-696f13bea4f3",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "4bdde342c19e29afb5638f0c6c5ef9912d908c01c7d1d5948d1d82330b8c1ae3",
     "screenshot": "../images/tutoriel/12-regles.png"
   },
   {
@@ -245,10 +340,15 @@
       "Même extraction, mêmes règles",
       "Des critères à discuter avec le client"
     ],
+    "code": "const requiredByCategory = {\n  devis: ['need', 'budget', 'deadline'],\n  rendez_vous: ['need', 'availability'],\n  support: ['product', 'problem'],\n  autre: ['need'],\n};\nconst required = requiredByCategory[extraction?.category];",
+    "audio": "../../work/higgsfield-audio/20-node-10.wav",
+    "audio_job_id": "420d5432-256a-4f56-ac03-07221089cedf",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "8e6f1db248b4086a67239331fbe2e27b8c401c3e27937caf139e6d558a440969",
     "covered_nodes": [
       "Appliquer les règles de qualification"
     ],
-    "code": "const requiredByCategory = {\n  devis: ['need', 'budget', 'deadline'],\n  rendez_vous: ['need', 'availability'],\n  support: ['product', 'problem'],\n  autre: ['need'],\n};\nconst required = requiredByCategory[extraction?.category];",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -261,10 +361,15 @@
       "Filtrer les champs requis absents",
       "Exposer le calcul dans la sortie du nœud"
     ],
+    "code": "const missing_fields = required.filter(\n  key => facts[key] === ''\n);\n\n// Libellés exposés dans la qualification :\nmissing_information:\n  missing_fields.map(key => labels[key]),",
+    "audio": "../../work/higgsfield-audio/21-node-11.wav",
+    "audio_job_id": "48499550-3863-4730-a140-1d20b5afcf08",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "42199d4ecaba5301af6bf9105db7d3686bce37fb9e05cfae710b0e0ca1a2742b",
     "covered_nodes": [
       "Appliquer les règles de qualification"
     ],
-    "code": "const missing_fields = required.filter(\n  key => facts[key] === ''\n);\n\n// Libellés exposés dans la qualification :\nmissing_information:\n  missing_fields.map(key => labels[key]),",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -273,6 +378,11 @@
     "title": "Composition : lire les gabarits",
     "narration": "Le nœud Composer le brouillon contient les libellés et les formulations utilisés pour produire le résultat. Le texte affiché ici est le code de configuration. La carte suivante agrandit les étapes de composition pour distinguer le résumé, les questions et la réponse au client.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/22-capture-13-brouillon.wav",
+    "audio_job_id": "464da177-23f2-4287-9f34-0b52c0d3f5ba",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "eb0534690f8209afbd19c47247ffd17db1fea02254a956c7be944f8a64a7f03d",
     "screenshot": "../images/tutoriel/13-brouillon.png"
   },
   {
@@ -285,10 +395,15 @@
       "Filter sélectionne, map met en forme",
       "Aucune nouvelle génération libre"
     ],
+    "code": "const observed = qualification.required_fields\n  .filter(key => qualification.facts[key] !== '')\n  .map(key =>\n    `${labels[key]} : « ${qualification.facts[key]} ».`\n  );",
+    "audio": "../../work/higgsfield-audio/23-node-12.wav",
+    "audio_job_id": "5a389831-7ca9-41d2-9531-4263c290a4b3",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "c5f17af1dcf33ccc3fc7288cdd353dad332339da24af65126a21e594d1e9ff4a",
     "covered_nodes": [
       "Composer le brouillon"
     ],
-    "code": "const observed = qualification.required_fields\n  .filter(key => qualification.facts[key] !== '')\n  .map(key =>\n    `${labels[key]} : « ${qualification.facts[key]} ».`\n  );",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -301,10 +416,15 @@
       "Accusé de réception si la demande est complète",
       "Aucun texte libre injecté dans le brouillon"
     ],
+    "code": "qualification.missing_fields\n  .map(key => '- ' + questions[key])\n  .join('\\n')\n\n// Contrat final de la fonction :\nreturn {\n  category: qualification.category,\n  summary,\n  missing_information: [...qualification.missing_information],\n  draft_reply\n};",
+    "audio": "../../work/higgsfield-audio/24-node-13.wav",
+    "audio_job_id": "142caf36-8c25-41ea-a3e4-13f5ebdee09c",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "c18174f257d421ba64aa51213b98e702b34eb05c3a79a26048c5b6ad389daa8e",
     "covered_nodes": [
       "Composer le brouillon"
     ],
-    "code": "qualification.missing_fields\n  .map(key => '- ' + questions[key])\n  .join('\\n')\n\n// Contrat final de la fonction :\nreturn {\n  category: qualification.category,\n  summary,\n  missing_information: [...qualification.missing_information],\n  draft_reply\n};",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -313,6 +433,11 @@
     "title": "Settings : trois tentatives au total",
     "narration": "Dans Settings de l’appel IA, Retry On Fail est activé. Max Tries vaut trois et l’attente vaut mille millisecondes. On Error utilise la sortie d’erreur. Ces paramètres déclenchent la branche de panne lorsque les appels échouent ; nous allons voir comment elle conserve cette issue.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/25-capture-10-retry.wav",
+    "audio_job_id": "76efc939-1fca-4792-b361-e93c437a7a8d",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "0571e3ea91d6ccf45ec53937e0a20e54eecd850617fcf76a32f34e1f9c4ddedb",
     "screenshot": "../images/tutoriel/10-retry.png"
   },
   {
@@ -325,10 +450,15 @@
       "Réutiliser la tentative réservée",
       "Aucune qualification de remplacement"
     ],
+    "code": "attempt_token:\n  $('Réserver sans doublon').first().json.attempt_token,\nerror: {\n  code: 'LLM_UNAVAILABLE',\n  // Message explicatif omis dans cet extrait.\n},\nmetrics: {\n  qualification_version: 'facts-v2',\n  draft_method: 'template'\n}",
+    "audio": "../../work/higgsfield-audio/26-node-14.wav",
+    "audio_job_id": "82fafe56-5842-4709-997e-f81bb876c896",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "18eacca9f53542606859dca4641c5de5a92d517925d4bb6e52c5b26e404e7810",
     "covered_nodes": [
       "Contenir la panne IA"
     ],
-    "code": "attempt_token:\n  $('Réserver sans doublon').first().json.attempt_token,\nerror: {\n  code: 'LLM_UNAVAILABLE',\n  // Message explicatif omis dans cet extrait.\n},\nmetrics: {\n  qualification_version: 'facts-v2',\n  draft_method: 'template'\n}",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -341,10 +471,15 @@
       "Recomposition avant stockage",
       "SQLite confirmé avant Sheets"
     ],
+    "code": "\"method\": \"POST\",\n\"sendBody\": true,\n\"specifyBody\": \"json\",\n\"jsonBody\": \"={{ $json }}\"\n\n// Fragment de construction de l’URL :\nencodeURIComponent(\n  $('Réserver sans doublon').first().json.request_id\n)",
+    "audio": "../../work/higgsfield-audio/27-node-15.wav",
+    "audio_job_id": "797b3738-4899-4dc2-a27a-798b52080854",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "500239e0899a03e89b274f61b1d6abb77b4a78c8f01dce5c18d3aae4f1eb58f7",
     "covered_nodes": [
       "Enregistrer le résultat"
     ],
-    "code": "\"method\": \"POST\",\n\"sendBody\": true,\n\"specifyBody\": \"json\",\n\"jsonBody\": \"={{ $json }}\"\n\n// Fragment de construction de l’URL :\nencodeURIComponent(\n  $('Réserver sans doublon').first().json.request_id\n)",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -357,10 +492,15 @@
       "Écriture non confirmée ≠ résultat perdu",
       "Inspecter le dossier avant une reprise"
     ],
+    "code": "ok: false,\nstatus: 'persistence_error',\nrequest_id:\n  $('Réserver sans doublon').first().json.request_id,",
+    "audio": "../../work/higgsfield-audio/28-node-16.wav",
+    "audio_job_id": "eb2d6849-edb0-4e49-8565-5753b2a5f013",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "28f91a9b75228d1e9f291e12f9a1783ca1cb61742a58129930041cfee6f7c296",
     "covered_nodes": [
       "Persistance à vérifier"
     ],
-    "code": "ok: false,\nstatus: 'persistence_error',\nrequest_id:\n  $('Réserver sans doublon').first().json.request_id,",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -369,6 +509,11 @@
     "title": "Suivi : aplatir une copie du dossier",
     "narration": "Le nœud Préparer le suivi construit la ligne destinée au tableur après la confirmation du stockage. Le dossier structuré est conservé à côté de cette ligne. La capture permet de retrouver le mapping ; le code agrandi explique les valeurs de repli pour les dossiers sans analyse.",
     "bullets": [],
+    "audio": "../../work/higgsfield-audio/29-capture-17-suivi.wav",
+    "audio_job_id": "5c166e4e-cdb4-4cbc-9483-e25c11af4c37",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "1eba8c7a2f194a539d33cafafbd591081790340ec36ea9595d95d6513c7158d3",
     "screenshot": "../images/tutoriel/17-suivi.png"
   },
   {
@@ -381,10 +526,15 @@
       "Valeurs vides pour une analyse absente",
       "Conserver aussi le dossier structuré"
     ],
+    "code": "const response = $input.first().json;\nconst record = response.record ?? response;\nconst input = record.input ?? record;\nconst analysis = record.analysis ?? {};\n\n// Extraits du mapping :\ninformations_manquantes:\n  (analysis.missing_information ?? []).join(' | '),\nstatut: record.status ?? 'unknown',\nerreur: record.error?.code ?? '',\nmodele: record.metrics?.model ?? '',",
+    "audio": "../../work/higgsfield-audio/30-node-17.wav",
+    "audio_job_id": "f3b14ef5-c08b-400b-a3ae-376e6147e15b",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "9e733ab229f61eb52074926b3c2055337a41b3bb3ef33909d866cac718022488",
     "covered_nodes": [
       "Préparer le suivi"
     ],
-    "code": "const response = $input.first().json;\nconst record = response.record ?? response;\nconst input = record.input ?? record;\nconst analysis = record.analysis ?? {};\n\n// Extraits du mapping :\ninformations_manquantes:\n  (analysis.missing_information ?? []).join(' | '),\nstatut: record.status ?? 'unknown',\nerreur: record.error?.code ?? '',\nmodele: record.metrics?.model ?? '',",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -397,10 +547,15 @@
       "Branche locale utilisable sans Google",
       "Le dossier a déjà été enregistré"
     ],
+    "code": "\"leftValue\": \"={{ $json.sheets_enabled }}\",\n\"rightValue\": true,\n\"operator\": {\n  \"type\": \"boolean\",\n  \"operation\": \"true\",\n  \"singleValue\": true\n}",
+    "audio": "../../work/higgsfield-audio/31-node-18.wav",
+    "audio_job_id": "b80da576-1b31-4a43-845f-9a3e4e7cbaad",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "c6351a36b59b5084ef16bdb0eb40427bbcc1c38ef4341f313866cb31977620b6",
     "covered_nodes": [
       "Google Sheets configuré ?"
     ],
-    "code": "\"leftValue\": \"={{ $json.sheets_enabled }}\",\n\"rightValue\": true,\n\"operator\": {\n  \"type\": \"boolean\",\n  \"operation\": \"true\",\n  \"singleValue\": true\n}",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -413,10 +568,15 @@
       "Mode RAW pour les valeurs",
       "Nœud désactivé sans références privées"
     ],
+    "code": "\"operation\": \"appendOrUpdate\",\n\"matchingColumns\": [\"demande_id\"],\n\"attemptToConvertTypes\": false,\n\"convertFieldsToString\": false,\n\"options\": {\"cellFormat\": \"RAW\"},\n\"retryOnFail\": true,\n\"maxTries\": 3,\n\"waitBetweenTries\": 1000,\n\"disabled\": true",
+    "audio": "../../work/higgsfield-audio/32-node-19.wav",
+    "audio_job_id": "80038134-55b7-4243-b6f7-85294e4bb3b6",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "2ad82c3081cbe051f343ced4a69473a8e80d553cdbc554f711f9def5e748f021",
     "covered_nodes": [
       "Synchroniser Google Sheets"
     ],
-    "code": "\"operation\": \"appendOrUpdate\",\n\"matchingColumns\": [\"demande_id\"],\n\"attemptToConvertTypes\": false,\n\"convertFieldsToString\": false,\n\"options\": {\"cellFormat\": \"RAW\"},\n\"retryOnFail\": true,\n\"maxTries\": 3,\n\"waitBetweenTries\": 1000,\n\"disabled\": true",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -429,10 +589,15 @@
       "Rattacher par la réservation",
       "Un statut distinct du résultat métier"
     ],
+    "code": "attempt_token:\n  $(\"Réserver sans doublon\").first().json.attempt_token,\nstatus: \"synced\"",
+    "audio": "../../work/higgsfield-audio/33-node-20.wav",
+    "audio_job_id": "ab3b3884-b6c0-4776-a6e4-f1fd8b5a6a61",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "7534ef4480be8e0e0ccd8e6067fe6720a6627a92a8f8152453c99800bd857a68",
     "covered_nodes": [
       "Confirmer la synchronisation"
     ],
-    "code": "attempt_token:\n  $(\"Réserver sans doublon\").first().json.attempt_token,\nstatus: \"synced\"",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -445,10 +610,15 @@
       "Échec Sheets enregistré séparément",
       "Pas de reprise automatique différée"
     ],
+    "code": "attempt_token:\n  $(\"Réserver sans doublon\").first().json.attempt_token,\nstatus: \"failed\"",
+    "audio": "../../work/higgsfield-audio/34-node-21.wav",
+    "audio_job_id": "1688f492-26b5-4a91-990f-962efd25d7de",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "f9e1e77990aa7fa83e6c3a89b8875e9765de324fd2bcd4269f78304a10e1046c",
     "covered_nodes": [
       "Signaler l’échec Sheets"
     ],
-    "code": "attempt_token:\n  $(\"Réserver sans doublon\").first().json.attempt_token,\nstatus: \"failed\"",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -461,11 +631,16 @@
       "Statut skipped mémorisé",
       "Lire aussi le statut métier du dossier"
     ],
+    "code": "const response = $input.first().json;\n\n// Champs retournés par la fin de branche :\nok: true,\nrecord: response.record ?? response,\nsheets_sync: 'skipped',",
+    "audio": "../../work/higgsfield-audio/35-node-22.wav",
+    "audio_job_id": "316a2a9b-d7ef-4cb7-979a-3865210fdda5",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "4fdc4c4155b5a8a7cc6c49fd8905fe75c7bb3c301cc3193f8100af9fa9bc5731",
     "covered_nodes": [
       "Conserver sans Google Sheets",
       "Terminer sans Google Sheets"
     ],
-    "code": "const response = $input.first().json;\n\n// Champs retournés par la fin de branche :\nok: true,\nrecord: response.record ?? response,\nsheets_sync: 'skipped',",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -478,11 +653,16 @@
       "Incertitude de suivi rendue visible",
       "Aucune approbation ni aucun envoi"
     ],
+    "code": "const response = $input.first().json;\nconst record = response.record ?? response;\n\n// En cas de suivi non confirmé :\nok: false,\nstatus: 'sink_tracking_error',\nrecord: $('Préparer le suivi').first().json.record,",
+    "audio": "../../work/higgsfield-audio/36-node-23.wav",
+    "audio_job_id": "9265f711-0464-4e17-b4fc-df7dab96a207",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "1c503b045fb8ee235b0ad15ea38ef3bab0fe34a67f44db4aefb3c51e72f9b807",
     "covered_nodes": [
       "Résultat prêt pour relecture",
       "Suivi de synchronisation à vérifier"
     ],
-    "code": "const response = $input.first().json;\nconst record = response.record ?? response;\n\n// En cas de suivi non confirmé :\nok: false,\nstatus: 'sink_tracking_error',\nrecord: $('Préparer le suivi').first().json.record,",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -495,6 +675,12 @@
       "Observer les données entre les nœuds",
       "Relier les contrôles au besoin métier"
     ],
+    "code": "\"type\": \"n8n-nodes-base.stickyNote\",\n\"typeVersion\": 1",
+    "audio": "../../work/higgsfield-audio/37-node-24.wav",
+    "audio_job_id": "f6cb115c-13ed-4071-afde-b543193b89ee",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "4167f9f4a1ff98f998aed13b03c7d544722aee510dee10506b8ae333dc1f6cdf",
     "covered_nodes": [
       "01 · Entrées",
       "02 · Qualification",
@@ -502,7 +688,6 @@
       "Configuration Google Sheets",
       "Scénarios contrôlés"
     ],
-    "code": "\"type\": \"n8n-nodes-base.stickyNote\",\n\"typeVersion\": 1",
     "code_format": "Extraits réels remis en lignes ; fragments non autonomes."
   },
   {
@@ -515,7 +700,12 @@
       "Le service conserve et contrôle.",
       "Trois fichiers, trois responsabilités."
     ],
-    "code": "import http from 'node:http';\nimport { DatabaseSync } from 'node:sqlite';\n// …\nimport {\n  validateExtraction,\n  applyQualificationRules,\n  composeAnalysis,\n} from './qualification-policy.mjs';\n// …"
+    "code": "import http from 'node:http';\nimport { DatabaseSync } from 'node:sqlite';\n// …\nimport {\n  validateExtraction,\n  applyQualificationRules,\n  composeAnalysis,\n} from './qualification-policy.mjs';\n// …",
+    "audio": "../../work/higgsfield-audio/38-backend-01.wav",
+    "audio_job_id": "f5ab7a90-a018-4d6b-a5e6-7e5eaa5f9a9d",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "88651ddbf6bdfbb12523b9c4211114bca67e4288f6cd06f206c3ea2abe7eae46"
   },
   {
     "id": "backend-02",
@@ -527,7 +717,12 @@
       "L’empreinte compare les contenus.",
       "Le hash ne chiffre pas les données."
     ],
-    "code": "const payload = {\n  first_name: text(input.first_name, 'Prénom', 100),\n  last_name: text(input.last_name, 'Nom', 100),\n  email: text(input.email, 'Email', 254).toLowerCase(),\n  message: text(input.message, 'Message', 10_000),\n  scenario: input.scenario ?? 'normal',\n};\n// … contrôles de l'email et du scénario\nconst payloadHash = hash(payload);"
+    "code": "const payload = {\n  first_name: text(input.first_name, 'Prénom', 100),\n  last_name: text(input.last_name, 'Nom', 100),\n  email: text(input.email, 'Email', 254).toLowerCase(),\n  message: text(input.message, 'Message', 10_000),\n  scenario: input.scenario ?? 'normal',\n};\n// … contrôles de l'email et du scénario\nconst payloadHash = hash(payload);",
+    "audio": "../../work/higgsfield-audio/39-backend-02.wav",
+    "audio_job_id": "1d5cf111-1acc-4d1c-a250-a85577d50487",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "b3a0fb219000ed3ba33f9a1e23a670777a973a0a7a470a17139bb4a82524cf5e"
   },
   {
     "id": "backend-03",
@@ -539,7 +734,12 @@
       "La transaction valide tout ou rien.",
       "Le réseau reste hors transaction."
     ],
-    "code": "const transaction = callback => {\n  db.exec('BEGIN IMMEDIATE');\n  try {\n    const result = callback();\n    db.exec('COMMIT');\n    return result;\n  } catch (error) {\n    db.exec('ROLLBACK');\n    throw error;\n  }\n};"
+    "code": "const transaction = callback => {\n  db.exec('BEGIN IMMEDIATE');\n  try {\n    const result = callback();\n    db.exec('COMMIT');\n    return result;\n  } catch (error) {\n    db.exec('ROLLBACK');\n    throw error;\n  }\n};",
+    "audio": "../../work/higgsfield-audio/40-backend-03.wav",
+    "audio_job_id": "249baf2b-285e-413c-8b62-4484abc61e97",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "cbc79c03a3c5e59f8a27dadb4555c21e738b3323b2ad66ae70eb692f6c87074c"
   },
   {
     "id": "backend-04",
@@ -551,7 +751,12 @@
       "Le nouveau jeton remplace l’ancien.",
       "Une reprise doit être déclenchée."
     ],
-    "code": "if (previous) {\n  // … contrôle de l'empreinte\n  if (previous.status !== 'processing' ||\n      previous.lease_until > now()) {\n    return { route: 'duplicate', request_id: id,\n             record: record(previous) };\n  }\n  const token = secret();\n  // … mise à jour du jeton et du bail en base\n  event(id, 'lease_reclaimed');\n  // … réponse autorisant la nouvelle tentative\n}"
+    "code": "if (previous) {\n  // … contrôle de l'empreinte\n  if (previous.status !== 'processing' ||\n      previous.lease_until > now()) {\n    return { route: 'duplicate', request_id: id,\n             record: record(previous) };\n  }\n  const token = secret();\n  // … mise à jour du jeton et du bail en base\n  event(id, 'lease_reclaimed');\n  // … réponse autorisant la nouvelle tentative\n}",
+    "audio": "../../work/higgsfield-audio/41-backend-04.wav",
+    "audio_job_id": "ce169cb3-2c82-4374-8557-4a11eee0dcc9",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "681d98374a5586e42fb1a57b6ab44960e34e279d2be8028b7e8aacc515241b86"
   },
   {
     "id": "backend-05",
@@ -563,7 +768,12 @@
       "La clé reste côté serveur.",
       "Une clé présente peut être invalide."
     ],
-    "code": "const configuredFile =\n  options.keyFile ?? env.OPENAI_API_KEY_FILE;\nconst file = configuredFile || standardKeyFile;\nif (file) {\n  try {\n    const key = readFileSync(file, 'utf8').trim();\n    // … contrôles du format de la clé\n    return { key };\n  } catch (error) {\n    // … erreur explicite ou recours à l'environnement\n  }\n}"
+    "code": "const configuredFile =\n  options.keyFile ?? env.OPENAI_API_KEY_FILE;\nconst file = configuredFile || standardKeyFile;\nif (file) {\n  try {\n    const key = readFileSync(file, 'utf8').trim();\n    // … contrôles du format de la clé\n    return { key };\n  } catch (error) {\n    // … erreur explicite ou recours à l'environnement\n  }\n}",
+    "audio": "../../work/higgsfield-audio/42-backend-05.wav",
+    "audio_job_id": "9a7c0671-d452-4fa0-b307-742b7ab29bb9",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "b3d3b9b5988638394a3b3485ac113d1fb214905442575397ca19765953a48dc2"
   },
   {
     "id": "backend-06",
@@ -575,7 +785,12 @@
       "Les sorties incomplètes sont refusées.",
       "La forme ne garantit pas le sens."
     ],
-    "code": "body = {\n  model,\n  input: messages,\n  store: false,\n  reasoning: { effort: 'low' },\n  max_output_tokens: 2000,\n  text: { format: {\n    type: 'json_schema',\n    name: 'qualification_facts',\n    strict: true, schema\n  } }\n};"
+    "code": "body = {\n  model,\n  input: messages,\n  store: false,\n  reasoning: { effort: 'low' },\n  max_output_tokens: 2000,\n  text: { format: {\n    type: 'json_schema',\n    name: 'qualification_facts',\n    strict: true, schema\n  } }\n};",
+    "audio": "../../work/higgsfield-audio/43-backend-06.wav",
+    "audio_job_id": "2181a8bc-3030-479e-986b-2315d8366c26",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "ad44711756857df096cc0ee7b7e57c7fb73f07fde79349ad517c81e24aecec4b"
   },
   {
     "id": "backend-07",
@@ -587,7 +802,12 @@
       "Des erreurs structurées et sobres.",
       "Les simulations sont identifiées."
     ],
-    "code": "// Extrait de cleanMetrics\nconst result = {};\n// … champs texte autorisés\nfor (const key of [\n  'duration_ms', 'prompt_tokens',\n  'completion_tokens', 'attempts'\n]) if (typeof input[key] === 'number' &&\n       Number.isFinite(input[key]) && input[key] >= 0) {\n  result[key] = input[key];\n}\nreturn result;"
+    "code": "// Extrait de cleanMetrics\nconst result = {};\n// … champs texte autorisés\nfor (const key of [\n  'duration_ms', 'prompt_tokens',\n  'completion_tokens', 'attempts'\n]) if (typeof input[key] === 'number' &&\n       Number.isFinite(input[key]) && input[key] >= 0) {\n  result[key] = input[key];\n}\nreturn result;",
+    "audio": "../../work/higgsfield-audio/44-backend-07.wav",
+    "audio_job_id": "7b617f7d-8edd-44f8-a2b4-ef3d61b15ca7",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "e591acb35e0112dedba5a8de74706350d674b52ab05a56559c3edf6b6a2a38b6"
   },
   {
     "id": "backend-08",
@@ -599,7 +819,12 @@
       "Le serveur recalcule l’analyse.",
       "L’origine textuelle ne prouve pas le sens."
     ],
-    "code": "extraction = validateExtraction(\n  input.extraction,\n  JSON.parse(row.payload).message\n);\n// …\nconst expected = validateAnalysis(\n  composeAnalysis(applyQualificationRules(extraction))\n);\nif (JSON.stringify(analysis) !== JSON.stringify(expected)) {\n  // … refus HTTP 422 : analysis_mismatch\n}"
+    "code": "extraction = validateExtraction(\n  input.extraction,\n  JSON.parse(row.payload).message\n);\n// …\nconst expected = validateAnalysis(\n  composeAnalysis(applyQualificationRules(extraction))\n);\nif (JSON.stringify(analysis) !== JSON.stringify(expected)) {\n  // … refus HTTP 422 : analysis_mismatch\n}",
+    "audio": "../../work/higgsfield-audio/45-backend-08.wav",
+    "audio_job_id": "f8b769b1-944d-44af-b8eb-919498b6a82b",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "75520da0eca22707e6995efc3a9e8374a22189d41285eb833b58796748d65e71"
   },
   {
     "id": "backend-09",
@@ -611,7 +836,12 @@
       "La session protège le parcours local.",
       "Approuver ne déclenche aucun envoi."
     ],
-    "code": "checkHuman(req, input);\n// … transaction et contrôle du statut courant\nconst status = match[2] === 'approve'\n  ? 'approved' : 'rejected';\n// … mise à jour du statut en base\n event(row.id, 'human_decision', {\n  decision: status,\n  actor: 'local_reviewer',\n  delivery: 'none'\n});"
+    "code": "checkHuman(req, input);\n// … transaction et contrôle du statut courant\nconst status = match[2] === 'approve'\n  ? 'approved' : 'rejected';\n// … mise à jour du statut en base\n event(row.id, 'human_decision', {\n  decision: status,\n  actor: 'local_reviewer',\n  delivery: 'none'\n});",
+    "audio": "../../work/higgsfield-audio/46-backend-09.wav",
+    "audio_job_id": "f2448100-c804-403b-a1d9-575b440ce20a",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "8e9ed7f4ebd64784d387f780ff5b07124a0f76755c1af7dac0d5e40afe7c19fa"
   },
   {
     "id": "backend-10",
@@ -622,7 +852,12 @@
       "Les tests isolent les mécanismes.",
       "La qualité du modèle demande un corpus.",
       "Les limites sont explicites."
-    ]
+    ],
+    "audio": "../../work/higgsfield-audio/47-backend-10.wav",
+    "audio_job_id": "7aa53f6f-ae34-4440-8153-87c3d0eded00",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "25295145c762a8bf59851c811ac6942150a9ccdef7b929ef113e448e65c0c86e"
   },
   {
     "id": "final-preuves",
@@ -634,7 +869,12 @@
       "Scénarios techniques : 7/7",
       "Tests isolés : 29 réussites",
       "Google Sheets : écriture non validée"
-    ]
+    ],
+    "audio": "../../work/higgsfield-audio/48-final-preuves.wav",
+    "audio_job_id": "63c39ef9-f03a-4d59-91d1-faaa55e9ac2d",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "24d5c4851a86ea2130b5d928ae96949be37af982605faf1f093422baf6edd1ec"
   },
   {
     "id": "final-exercice",
@@ -646,7 +886,12 @@
       "Budget et date absents → needs_info",
       "Même contenu + même ID → doublon",
       "Panne simulée → technical_error"
-    ]
+    ],
+    "audio": "../../work/higgsfield-audio/49-final-exercice.wav",
+    "audio_job_id": "cdab5ffb-e803-461c-a782-0fe9494fc1b3",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "51394ebfb0a2777367a4eb20486d2ef5bafba46486a440352d09f5be0c254489"
   },
   {
     "id": "final-entretien",
@@ -659,6 +904,11 @@
       "5 min : IA, règles et code",
       "3 min : doublon et erreur",
       "2 min : limites et évolutions"
-    ]
+    ],
+    "audio": "../../work/higgsfield-audio/50-final-entretien.wav",
+    "audio_job_id": "08523a7e-1ef0-4ea6-9c9a-bf2287019ee9",
+    "audio_provider": "higgsfield",
+    "audio_voice_id": "d8ba9f14-8a24-44db-932b-99e16c45bd32",
+    "audio_sha256": "66abec2acbbdc23336125032ddf900bb1661fcdef8613ff341060536f08713ce"
   }
 ]
