@@ -1,5 +1,5 @@
 /** Deterministic procurement estimates. This module performs no I/O or model calls. */
-const PROJECTS = ['tiling', 'partition', 'lining'];
+const PROJECTS = ['tiling', 'partition', 'lining', 'bathroom'];
 const ROOMS = ['dry', 'wet', 'unknown'];
 const PRODUCT_FIELDS = ['tile', 'board', 'rail', 'stud', 'insulation'];
 const INPUT_FIELDS = ['project_type', 'room_type', 'room_usage', 'water_exposure', 'surface_m2', 'wall_lengths_m', 'height_m',
@@ -18,6 +18,8 @@ const LABELS = {
   framing_system: 'Quel système de cloison ou doublage est confirmé ? Utiliser l’identifiant indiqué par les règles.',
   wall_finish: 'La cloison reçoit-elle une finition légère (peinture/papier), du carrelage ou un autre revêtement lourd ?',
   product_ids: 'Quelles références du catalogue faut-il chiffrer ?',
+  length_m: 'Quelle est la longueur intérieure de la salle de bains, en mètres ?',
+  width_m: 'Quelle est la largeur intérieure de la salle de bains, en mètres ?',
 };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const absent = value => value === undefined || value === null || value === '';
@@ -42,6 +44,17 @@ export function selectRules(input, rulesDocument) {
   if (unknown.length) return invalid(unknown.map(field => ({ field, message: 'Champ non accepté par cet outil.' })));
   if (absent(input.project_type)) return information(['project_type'], { supported_scopes: PROJECTS });
   if (!PROJECTS.includes(input.project_type)) return unsupported('Ce type de projet n’est pas chiffré : plafonds, structure et cas complexes hors périmètre.', { supported_scopes: PROJECTS });
+  if (input.project_type === 'bathroom') {
+    if (!absent(input.room_type) && !['wet', 'unknown'].includes(input.room_type)) return invalid([{ field: 'room_type', message: 'Une salle de bains ne peut pas être déclarée sèche.' }]);
+    const rule = (rulesDocument?.rules ?? []).find(item => item.project_type === 'bathroom' && item.room_type === 'wet');
+    if (!rule) return unsupported('Le gabarit estimatif salle de bains n’est pas encore configuré.');
+    return { ...rule, rule_id: rule.id, required_fields: ['length_m', 'width_m'], questions: ['length_m', 'width_m'].map(field => ({ field, question: LABELS[field] })),
+      input_contract: { project_type: 'bathroom', required: ['length_m', 'width_m'],
+        optional: ['height_m', 'margin_pct', 'openings', 'include_insulation', 'wall_finish', 'water_exposure', 'shower_footprint_m2', 'product_ids', 'budget_eur'],
+        units: { lengths: 'm', area: 'm2', margin_pct: 'percent 0..30', budget_eur: 'EUR' },
+        openings: 'Array<{wall_index:0..3,width_m,height_m}>; pans dans l’ordre longueur, largeur, longueur, largeur.',
+        note: 'Donner seulement les dimensions connues. Le calculateur annonce lui-même les hypothèses manquantes ; ne pas faire passer un défaut pour une confirmation de l’utilisateur.' } };
+  }
   const available = (rulesDocument?.rules ?? []).filter(rule => rule.project_type === input.project_type);
   if (absent(input.room_type) || input.room_type === 'unknown') return information(['room_type'], { supported_scopes: available, assumptions: [] });
   if (!ROOMS.includes(input.room_type)) return invalid([{ field: 'room_type', message: 'Valeur attendue : dry, wet ou unknown.' }]);
@@ -70,6 +83,7 @@ function publicPrice(product, catalogDate) {
     && Math.abs(amount * 100 - Math.round(amount * 100)) < 1e-6;
   return { amount: available ? amount : null, unit: 'pack', currency: 'EUR',
     status: available ? 'catalog_snapshot' : 'unavailable',
+    basis: product.price?.basis ?? product.price?.kind ?? 'catalogue_price', seller: product.seller ?? null, notice: product.price?.notice ?? null,
     snapshot_date: product.snapshot_date ?? catalogDate ?? null, source_url: product.source_url ?? null };
 }
 
@@ -78,6 +92,7 @@ function line(product, packs, requiredUnits, unit, basis, catalogDate) {
   const cents = price.amount === null ? null : Math.round(price.amount * 100) * packs;
   return { product_id: product.id, name: product.name, category: product.category,
     required_quantity: round(requiredUnits, 4), required_unit: unit, packs,
+    pack_label: product.pack.label ?? null, units_per_pack: product.pack.quantity,
     purchased_units: packs * product.pack.quantity,
     coverage_purchased_m2: product.pack.coverage_m2 ? round(packs * product.pack.coverage_m2, 4) : null,
     price_per_pack: price, total_eur: cents === null ? null : cents / 100, calculation: basis };
@@ -101,6 +116,7 @@ function totals(lines, budget) {
 /** Returns a tool-friendly business result, including precise questions when data is absent. */
 export function estimate(input, catalog, rulesDocument) {
   if (!object(input)) return invalid([{ field: 'body', message: 'Objet JSON requis.' }]);
+  if (input.project_type === 'bathroom') return estimateBathroom(input, catalog, rulesDocument);
   const unexpected = Object.keys(input).filter(key => !INPUT_FIELDS.includes(key));
   if (unexpected.length) return invalid(unexpected.map(field => ({ field, message: 'Champ non accepté ; unités uniquement en mètres, m² et euros.' })));
   const missing = [];
@@ -187,7 +203,8 @@ export function estimate(input, catalog, rulesDocument) {
     const framing = policy.framing;
     if (!framing || typeof input.framing_system !== 'string' || input.framing_system !== framing.system)
       return unsupported('Système d’ossature non confirmé par une règle sourcée.', { rules: policy });
-    if (framing.faces !== faces || framing.layers !== 1 || !finite(framing.max_height_m, 0.1, 2.5) || !finite(framing.max_stud_spacing_m, 0.1, 0.6))
+    if (framing.faces !== faces || framing.layers !== 1 || !finite(framing.max_height_m, 0.1, 2.5) || !finite(framing.max_stud_spacing_m, 0.1, 0.6)
+      || ![1, 2].includes(framing.stud_multiplier ?? 1))
       return unsupported('Règle d’ossature insuffisante pour ce calcul.');
     if (input.height_m > framing.max_height_m || input.stud_spacing_m > framing.max_stud_spacing_m)
       return unsupported('Hauteur ou entraxe au-delà des limites du système confirmé.', { rules: policy });
@@ -238,10 +255,11 @@ export function estimate(input, catalog, rulesDocument) {
     const railUnits = ceil(baseRailUnits * factor);
     lines.push(line(rail, ceil(railUnits / rail.pack.quantity), railUnits, 'piece',
       `ceil(somme 2 × ceil(longueur_pan / longueur_rail) × marge) = ${railUnits} ; ouvertures non déduites`, catalog.snapshot_date));
-    const studUnitsByWall = input.wall_lengths_m.map((length, i) => ceil(length / input.stud_spacing_m) + 1 + 2 * openingCounts[i]);
+    const studMultiplier = framing.stud_multiplier ?? 1;
+    const studUnitsByWall = input.wall_lengths_m.map((length, i) => (ceil(length / input.stud_spacing_m) + 1 + 2 * openingCounts[i]) * studMultiplier);
     const studUnits = ceil(studUnitsByWall.reduce((sum, count) => sum + count, 0) * factor);
     lines.push(line(stud, ceil(studUnits / stud.pack.quantity), studUnits, 'piece',
-      `ceil(somme (ceil(longueur_pan / entraxe) + 1 + 2 × ouvertures_pan) × marge) = ${studUnits}`, catalog.snapshot_date));
+      `ceil(somme ((ceil(longueur_pan / entraxe) + 1 + 2 × ouvertures_pan) × ${studMultiplier}) × marge) = ${studUnits}`, catalog.snapshot_date));
     if (includeInsulation) {
       const insulation = selected.insulation;
       const thickness = insulation.metadata?.thickness_mm;
@@ -259,16 +277,16 @@ export function estimate(input, catalog, rulesDocument) {
     measurements = { wall_lengths_m: input.wall_lengths_m, height_m: input.height_m, faces, layers: 1,
       gross_wall_area_m2: round(grossArea, 4), openings_area_m2: round(removedArea, 4), net_wall_area_m2: round(netArea, 4),
       board_area_with_margin_m2: round(boardSurface, 4), board_minimum_by_pan: geometricBoards,
-      base_studs_by_wall: studUnitsByWall, stud_spacing_m: input.stud_spacing_m, margin_pct: input.margin_pct };
+      base_studs_by_wall: studUnitsByWall, stud_multiplier: studMultiplier, stud_spacing_m: input.stud_spacing_m, margin_pct: input.margin_pct };
     assumptions.push('Plaques verticales de hauteur suffisante, sans raccord vertical ; minimum par largeur de pan sans réemploi idéal des découpes.',
       'Rails haut/bas comptés par pan sur les longueurs brutes ; aucun vide soustrait à l’ossature.',
-      'Montants de rive comptés pour chaque pan, plus deux montants par ouverture ; la marge est ensuite appliquée.');
+      `Montants de rive comptés pour chaque pan, plus deux positions de montants par ouverture ; ${studMultiplier === 2 ? 'chaque position est doublée, puis ' : ''}la marge est appliquée.`);
     limitations.push('Vis, bandes, enduits, fixations, joints, renforts et traverses complémentaires des ouvertures non chiffrés.',
       'Implantation des ouvertures, chevauchement, retours, angles et calepinage détaillé à vérifier.',
       'Ce calcul ne vérifie ni résistance mécanique, ni feu, ni performance acoustique ou thermique.');
     if (!includeInsulation) limitations.push('Isolation non incluse dans cette estimation.');
     if (input.room_type === 'wet') {
-      assumptions.push('Le chiffrage retient H1 sur les deux faces comme choix conservateur ; ce n’est pas une obligation générale de traiter deux faces.');
+      assumptions.push(faces === 2 ? 'Le chiffrage retient H1 sur les deux faces comme choix conservateur ; ce n’est pas une obligation générale de traiter deux faces.' : 'Le doublage comporte une seule face visible en H1 côté salle de bains ; aucun deuxième parement caché n’est compté.');
       limitations.push('Une plaque H1 ne constitue pas un système d’étanchéité ; protection à l’eau et accessoires à confirmer.');
     }
   }
@@ -276,4 +294,113 @@ export function estimate(input, catalog, rulesDocument) {
     rule_id: policy.rule_id, measurements, lines, ...totals(lines, input.budget_eur), assumptions, limitations,
     sources: policy.sources, catalogue_snapshot_date: catalog.snapshot_date ?? null,
     no_order_placed: true, no_payment: true };
+}
+
+/** A room is a budget envelope, not a commissioned installation design.
+ * Unknown details are preserved as labelled assumptions. Reuse the exact same
+ * component calculator so pack rounding and euro-cent arithmetic have one source.
+ */
+function estimateBathroom(input, catalog, rulesDocument) {
+  const allowed = ['project_type', 'length_m', 'width_m', 'height_m', 'room_type', 'room_usage', 'water_exposure',
+    'margin_pct', 'openings', 'include_insulation', 'wall_finish', 'shower_footprint_m2', 'product_ids', 'budget_eur'];
+  const extra = Object.keys(input).filter(field => !allowed.includes(field));
+  if (extra.length) return invalid(extra.map(field => ({ field, message: 'Champ non accepté pour une pièce rectangulaire ; fournir longueur et largeur, pas une surface calculée par le modèle.' })));
+  const missing = ['length_m', 'width_m'].filter(field => absent(input[field]));
+  if (missing.length) return information(missing);
+  const issues = [];
+  for (const field of ['length_m', 'width_m']) if (!finite(input[field], 0.1, 100)) issues.push({ field, message: 'Dimension intérieure numérique en mètres, entre 0,10 et 100.' });
+  if (!absent(input.room_type) && !['wet', 'unknown'].includes(input.room_type)) issues.push({ field: 'room_type', message: 'Données contradictoires : le projet bathroom est une pièce humide.' });
+  if (!absent(input.room_usage) && !['private_bathroom', 'unknown'].includes(input.room_usage)) return unsupported('Le gabarit estimatif est réservé à une salle de bains privative ; local public ou piscine non couverts.');
+  if (!absent(input.water_exposure) && !['outside_direct_spray', 'direct_shower_spray', 'shower_tray', 'unknown'].includes(input.water_exposure)) issues.push({ field: 'water_exposure', message: 'Valeur non reconnue ; indiquer outside_direct_spray, direct_shower_spray, shower_tray ou unknown.' });
+  if (input.product_ids !== undefined && (!object(input.product_ids) || Object.keys(input.product_ids).some(key => !PRODUCT_FIELDS.includes(key)) || Object.values(input.product_ids).some(id => typeof id !== 'string' || !id.trim())))
+    issues.push({ field: 'product_ids', message: 'Objet optionnel de références exactes du catalogue requis.' });
+  if (!absent(input.budget_eur) && (!finite(input.budget_eur, 0, 1_000_000) || Math.abs(input.budget_eur * 100 - Math.round(input.budget_eur * 100)) > 1e-6)) issues.push({ field: 'budget_eur', message: 'Budget numérique positif ou nul, au maximum deux décimales.' });
+  if (issues.length) return invalid(issues);
+  const policy = selectRules({ project_type: 'bathroom', room_type: 'wet' }, rulesDocument);
+  if (policy.status !== 'allowed') return unsupported(policy.reason ?? 'Le gabarit salle de bains n’est pas activé.', { rules: policy });
+  const defaults = { height_m: 2.5, margin_pct: 10, include_insulation: true, wall_finish: 'light',
+    ...(policy.default_parameters ?? {}) };
+  const effective = {};
+  const assumptionOrigins = [];
+  const parameter = (field, fallback, reason) => {
+    const provided = input[field] !== undefined && input[field] !== null && input[field] !== '';
+    effective[field] = provided ? input[field] : fallback;
+    assumptionOrigins.push({ field, value: effective[field], origin: provided ? 'provided' : 'default', reason: provided ? 'Valeur transmise au calculateur ; elle ne vaut pas validation technique.' : reason });
+    return effective[field];
+  };
+  for (const field of ['length_m', 'width_m']) parameter(field, undefined, '');
+  parameter('height_m', defaults.height_m, 'Hypothèse de première estimation à confirmer sur place.');
+  parameter('margin_pct', defaults.margin_pct, 'Marge de découpes modifiable ; choix estimatif, pas norme.');
+  parameter('openings', [], 'Aucune ouverture déduite faute de relevé ; cela ne signifie pas que la pièce n’a ni porte ni fenêtre.');
+  parameter('include_insulation', defaults.include_insulation, 'Provision d’isolant dans la cavité, à confirmer ; aucune performance acoustique ou thermique garantie.');
+  parameter('wall_finish', defaults.wall_finish, 'Hypothèse de finition légère des doublages ; finitions et protections des zones de douche à définir séparément.');
+  parameter('room_usage', 'private_bathroom', 'Salle de bains privative présumée ; confirmer avant tout achat.');
+  parameter('water_exposure', 'unknown', 'Emplacement et protection de la zone de douche inconnus ; aucune validation des zones projetées.');
+  parameter('shower_footprint_m2', 0, 'Sol brut retenu sans déduction d’un receveur/meuble non mesuré : provision de carreaux, pas prescription de carrelage dans la douche.');
+  if (!finite(effective.height_m, 0.1, 20)) issues.push({ field: 'height_m', message: 'Hauteur numérique en mètres, de 0,10 à 20.' });
+  if (!finite(effective.margin_pct, 0, 30)) issues.push({ field: 'margin_pct', message: 'Marge numérique de 0 à 30 %.' });
+  if (typeof effective.include_insulation !== 'boolean') issues.push({ field: 'include_insulation', message: 'Booléen requis.' });
+  if (!['light', 'tile', 'heavy', 'unknown'].includes(effective.wall_finish)) issues.push({ field: 'wall_finish', message: 'Finition attendue : light, tile, heavy ou unknown.' });
+  if (input.include_insulation === false && input.product_ids?.insulation) issues.push({ field: 'product_ids.insulation', message: 'Contradiction avec include_insulation:false.' });
+  const floorArea = input.length_m * input.width_m;
+  if (!finite(effective.shower_footprint_m2, 0, floorArea - 0.01)) issues.push({ field: 'shower_footprint_m2', message: 'Surface de receveur à déduire positive ou nulle, laissant au moins 0,01 m² de sol.' });
+  const wallLengths = [input.length_m, input.width_m, input.length_m, input.width_m];
+  const openingAreas = wallLengths.map(() => 0), openingWidths = wallLengths.map(() => 0);
+  if (!Array.isArray(effective.openings) || effective.openings.length > 100) issues.push({ field: 'openings', message: 'Liste de 0 à 100 ouvertures requise.' });
+  else for (let index = 0; index < effective.openings.length; index++) {
+    const item = effective.openings[index];
+    if (!object(item) || Object.keys(item).some(key => !['wall_index', 'width_m', 'height_m'].includes(key)) || !Number.isInteger(item.wall_index) || item.wall_index < 0 || item.wall_index > 3
+      || !finite(item.width_m, 0.01, wallLengths[item.wall_index]) || !finite(item.height_m, 0.01, effective.height_m)) {
+      issues.push({ field: `openings[${index}]`, message: 'Ouverture invalide : pan 0 à 3, largeur et hauteur positives contenues dans ce pan.' }); continue;
+    }
+    openingAreas[item.wall_index] += item.width_m * item.height_m;
+    openingWidths[item.wall_index] += item.width_m;
+  }
+  for (let index = 0; index < wallLengths.length; index++) if (openingAreas[index] >= wallLengths[index] * effective.height_m - 1e-10 || openingWidths[index] > wallLengths[index] + 1e-10)
+    issues.push({ field: `openings.wall_${index}`, message: 'Surfaces ou largeurs cumulées incompatibles avec ce pan.' });
+  if (issues.length) return invalid(issues);
+  const products = { ...(policy.recommended_product_ids ?? {}), ...(input.product_ids ?? {}) };
+  if (!effective.include_insulation) delete products.insulation;
+  for (const [category, id] of Object.entries(products)) assumptionOrigins.push({ field: `product_ids.${category}`, value: id, origin: input.product_ids?.[category] ? 'provided' : 'default',
+    reason: input.product_ids?.[category] ? 'Référence transmise au calculateur.' : 'Référence proposée par le gabarit sourcé, modifiable ; disponibilité non vérifiée.' });
+  assumptionOrigins.push({ field: 'wall_lengths_m', value: wallLengths, origin: 'derived', reason: 'Quatre murs du rectangle : longueur, largeur, longueur, largeur.' },
+    { field: 'framing_system', value: policy.framing?.system ?? null, origin: 'default', reason: 'Gabarit documentaire de doublage, distinct d’une cloison ; plan de pose à valider.' });
+  const wallProducts = Object.fromEntries(Object.entries(products).filter(([key]) => key !== 'tile'));
+  const floor = estimate({ project_type: 'tiling', room_type: 'wet', room_usage: 'private_bathroom', water_exposure: 'outside_direct_spray',
+    surface_m2: round(floorArea - effective.shower_footprint_m2, 8), margin_pct: effective.margin_pct, product_ids: { tile: products.tile } }, catalog, rulesDocument);
+  // This scoped copy authorizes only this sourced room gabarit. Generic lining
+  // remains subject to its original needs_information policy.
+  const wallRule = { ...policy, id: `${policy.rule_id}_walls`, project_type: 'lining', room_type: 'wet', required_fields: [],
+    assumptions: [...(policy.assumptions ?? []), 'Provision de parement H1 sur quatre murs existants ; finitions des zones projetées exclues.'] };
+  const scopedRules = { ...rulesDocument, rules: [wallRule, ...rulesDocument.rules.filter(rule => !(rule.project_type === 'lining' && rule.room_type === 'wet'))] };
+  const walls = estimate({ project_type: 'lining', room_type: 'wet', room_usage: 'private_bathroom', water_exposure: 'outside_direct_spray',
+    wall_lengths_m: wallLengths, height_m: effective.height_m, margin_pct: effective.margin_pct, openings: effective.openings,
+    stud_spacing_m: policy.framing?.max_stud_spacing_m, framing_system: policy.framing?.system,
+    wall_finish: effective.wall_finish, layers: 1, faces: 1, include_insulation: effective.include_insulation, product_ids: wallProducts }, catalog, scopedRules);
+  const components = { floor, walls };
+  const lines = Object.entries(components).flatMap(([section, result]) => (result.lines ?? []).map(item => ({ ...item, section })));
+  const fullScope = Object.values(components).every(result => result.status === 'ok');
+  const total = totals(lines, input.budget_eur);
+  if (!fullScope) {
+    total.total_eur = null; total.pricing_status = 'scope_partial';
+    total.budget = absent(input.budget_eur) ? { status: 'not_provided' } : { amount_eur: input.budget_eur, status: 'cannot_determine', difference_eur: null };
+  }
+  const perimeter = 2 * (input.length_m + input.width_m), openingArea = openingAreas.reduce((sum, area) => sum + area, 0);
+  return { status: fullScope ? 'ok' : 'partial', estimate_type: 'preliminary_room_procurement', project_type: 'bathroom', room_type: 'wet',
+    preliminary: true, rule_id: policy.rule_id,
+    measurements: { length_m: input.length_m, width_m: input.width_m, height_m: effective.height_m, floor_area_m2: round(floorArea, 4),
+      floor_area_for_tiles_m2: round(floorArea - effective.shower_footprint_m2, 4), shower_footprint_deducted_m2: effective.shower_footprint_m2,
+      perimeter_m: round(perimeter, 4), wall_lengths_m: wallLengths, gross_wall_area_m2: round(perimeter * effective.height_m, 4), openings_area_m2: round(openingArea, 4),
+      net_wall_area_m2: round(perimeter * effective.height_m - openingArea, 4), faces: 1, layers: 1, margin_pct: effective.margin_pct },
+    assumption_origins: assumptionOrigins, components, lines, ...total,
+    unpriced_components: Object.entries(components).filter(([, result]) => result.status !== 'ok').map(([section, result]) => ({ section, status: result.status, reason: result.reason ?? 'Informations ou système à compléter.', questions: result.questions ?? [] })),
+    assumptions: assumptionOrigins.filter(item => item.origin === 'default').map(item => `${item.field} = ${JSON.stringify(item.value)} : ${item.reason}`),
+    limitations: [...new Set([...(policy.limitations ?? []), 'Estimation des seuls matériaux principaux du catalogue, pas un devis de rénovation complète.',
+      'Une plaque H1 ne réalise pas l’étanchéité. Receveur, douche, protections à l’eau, pieds, joints et traversées sont à concevoir séparément.',
+      'Sol brut avant déduction des équipements non mesurés ; aucun carrelage dans le receveur n’est prescrit.',
+      'Vis, fixations, bandes, enduits, colle, joints, primaire, peinture, plomberie, électricité, ventilation, dépose et main-d’œuvre non chiffrés.',
+      ...Object.values(components).flatMap(result => result.limitations ?? [])])],
+    confirmation_needed: ['Hauteur et dimensions mesurées.', 'Ouvertures, supports, implantations et détails de pose.', 'Emplacement de la douche/baignoire et protection complète des zones exposées.',
+      'Finitions, assemblage fabricant, besoins d’isolation et accessoires.', 'Prix et disponibilité avant achat.'],
+    sources: policy.sources ?? [], catalogue_snapshot_date: catalog.snapshot_date ?? null, no_order_placed: true, no_payment: true };
 }

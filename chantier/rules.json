@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "rules_version": "chantier-v1",
+  "rules_version": "chantier-v2-bathroom",
   "snapshot_date": "2026-10-04",
   "purpose": "Aide à la préparation d'un achat et au métré estimatif, limitée à un catalogue vérifié manuellement.",
   "status_semantics": {
@@ -11,7 +11,8 @@
   "allowed_project_types": [
     "tiling",
     "partition",
-    "lining"
+    "lining",
+    "bathroom"
   ],
   "allowed_room_types": [
     "dry",
@@ -29,10 +30,11 @@
     "heavy_hanging_load_design"
   ],
   "question_order": [
-    "Distinguer création d'une cloison, doublage d'un mur existant et carrelage.",
-    "Qualifier l'usage de la pièce et de chaque face, la finition et l'exposition à l'eau.",
-    "Relever chaque pan ou sol, ses ouvertures et l'implantation d'ossature.",
-    "Choisir la marge et les références, puis faire confirmer les hypothèses avant le budget."
+    "Pour une salle de bains rectangulaire, demander seulement longueur et largeur si absentes ; produire un premier budget sous hypothèses explicites.",
+    "Appliquer les valeurs par défaut datées du scénario salle de bains uniquement quand l’utilisateur ne donne pas de valeur contradictoire.",
+    "Afficher les hypothèses de hauteur, finition, ouvertures, isolation et marge ; les rendre corrigeables après la première estimation.",
+    "Réserver les questions sur douche, baignoire, support et protections à la validation des postes concernés, sans bloquer les autres quantités.",
+    "Pour un projet isolé de cloison, doublage ou carrelage, conserver les contrôles propres à son périmètre."
   ],
   "quantity_policy": {
     "nature": "Formules géométriques et marges d'estimation propres à la démonstration ; elles ne remplacent ni les notices fabricant ni un calepinage.",
@@ -71,7 +73,10 @@
       "default": 10,
       "default_is_estimation_choice": true,
       "notice": "10 % est une hypothèse de chutes modifiable, pas une exigence normative. La géométrie et le mode de coupe peuvent imposer une autre réserve."
-    }
+    },
+    "bathroom_geometry": "Pièce rectangulaire : sol brut length_m × width_m ; pans [length_m,width_m,length_m,width_m] ; surface murale brute 2 × (length_m + width_m) × height_m. Aucune ouverture ni emprise de douche inventée. Les déductions sont faites uniquement à partir de mesures fournies.",
+    "bathroom_board_packs": "Doublage à une face : max(ceil(surface_nette × (1 + marge/100) / surface_plaque), somme(ceil(longueur_pan / largeur_plaque))), puis arrondi au conditionnement ; une plaque de hauteur suffisante, sans réemploi idéal de chutes.",
+    "bathroom_stud_packs": "Pour chaque pan, (ceil(longueur_pan / entraxe) + 1 + 2 × ouvertures_pan) × 2 pour montants doublés ; sommer, appliquer marge et arrondir. Les deux montants à toutes les stations constituent une provision conservatrice, pas un plan de pose."
   },
   "rules": [
     {
@@ -552,6 +557,111 @@
           "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
           "checked_on": "2026-10-04",
           "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        }
+      ]
+    },
+    {
+      "id": "bathroom_private_initial_estimate",
+      "project_type": "bathroom",
+      "room_type": "wet",
+      "status": "allowed",
+      "required_fields": [
+        "length_m",
+        "width_m"
+      ],
+      "default_parameters": {
+        "height_m": 2.5,
+        "margin_pct": 10,
+        "include_insulation": true,
+        "wall_finish": "light",
+        "stud_spacing_m": 0.6,
+        "framing_system": "bathroom_lining_placo_m48_double_600",
+        "room_usage": "private_bathroom",
+        "openings": [],
+        "layers": 1,
+        "faces": 1
+      },
+      "recommended_product_ids": {
+        "tile": "tile_arcano_95985488",
+        "board": "board_placomarine_h1_2500x600",
+        "rail": "rail_placo_r48_3000",
+        "stud": "stud_placo_m48_2790",
+        "insulation": "insulation_isocoton_45mm"
+      },
+      "framing": {
+        "system": "bathroom_lining_placo_m48_double_600",
+        "manufacturer": "PLACO Stil / Placomarine",
+        "max_height_m": 2.5,
+        "max_stud_spacing_m": 0.6,
+        "stud_multiplier": 2,
+        "faces": 1,
+        "layers": 1,
+        "profile_width_mm": 48,
+        "board_thickness_mm": 12.5
+      },
+      "conditions": {
+        "room_usage": [
+          "private_bathroom"
+        ],
+        "wall_finish": [
+          "light"
+        ],
+        "layers": [
+          1
+        ],
+        "estimate_scope": "partial_procurement_with_explicit_assumptions",
+        "excluded_scopes": [
+          "shower_tray_installation",
+          "waterproofing_design",
+          "public_wet_room",
+          "exterior_thermal_design",
+          "ceiling"
+        ]
+      },
+      "supported_scopes": [
+        "Premier budget des carreaux de sol et du doublage intérieur à une face des quatre murs d’une salle de bains rectangulaire privative.",
+        "Plaques Placomarine H1, rails et montants Stil M48 doublés à 600 mm, hauteur supposée 2,50 m ; finition légère hors zones de douche à traiter.",
+        "Provision d’isolant Isocoton 45 mm dans la cavité, sans promesse acoustique chiffrée ni étude thermique."
+      ],
+      "assumptions": [
+        "Si seule la longueur et la largeur sont données : hauteur supposée 2,50 m, marge 10 %, doublage des quatre murs, une face H1, finition peinte légère et isolation incluses. Ces choix sont des hypothèses corrigeables, jamais des informations attribuées à l’utilisateur.",
+        "Les ouvertures et emprises de douche non renseignées ne sont pas déduites : surface brute provisionnelle, pas affirmation que la pièce est sans porte.",
+        "Les carreaux sont provisionnés pour le sol courant ; aucun agrément pour un receveur carrelé n’est déduit de leur classement R9/A.",
+        "La présence d’une douche ou baignoire ne bloque pas les surfaces brutes et les matériaux de base. Leurs dimensions, protections, colle, joints et finitions restent des postes à compléter.",
+        "Le fabricant décrit un doublage M48 doublés de 2,50 m à entraxe 600 mm. Le prototype sélectionne la même famille de plaques/profils, mais ne délivre pas une conformité de l’ouvrage."
+      ],
+      "limitations": [
+        "Budget partiel d’approvisionnement ; fixations, vis, bandes, enduits hydrofuges, protections à l’eau, colle, joints, peinture, sanitaires, main-d’œuvre et livraison non chiffrés.",
+        "H1 ne signifie pas étanchéité complète. Supports, joints, pieds, traversées, ventilation et finitions des zones projetées restent à définir dans un système fabricant.",
+        "Pour un doublage à simple parement carrelé, le guide Placo impose un entraxe de 400 mm ; le scénario à 600 mm ne valide donc pas une finition murale carrelée.",
+        "Si hauteur réelle supérieure à 2,50 m ou autre finition : conserver le chiffrage du sol et expliquer que les murs demandent un autre système, sans falsifier la hauteur.",
+        "L’isolant de 45 mm est une provision intérieure ; les murs extérieurs, la vapeur d’eau et les performances globales réclament une étude séparée.",
+        "Prix datés, prix conseillé pour le rail, conditionnements complets et stocks à confirmer. Le résultat ne constitue pas un devis de rénovation complète."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Doublage sur rails et montants Stil",
+          "url": "https://www.placo.fr/comment-isoler-un-mur-avec-un-doublage-sur-ossature-rails-et-montants-stil",
+          "checked_on": "2026-10-04",
+          "scope": "M48 doublés, simple parement, hauteur 2,50 m sans reprise, entraxe 600 mm. Salle de bains : Placomarine et joints adaptés. Une finition carrelée de doublage à simple parement impose 400 mm."
+        },
+        {
+          "title": "Placo — Locaux humides et doublages",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Doublages en EB+ privatif : parement H1 ; détails de pieds, joints, traversées et surfaces à protéger. Pas de déduction automatique que H1 seul rend l’ensemble étanche."
+        },
+        {
+          "title": "ISOVER — Isocoton, applications et systèmes Placo",
+          "url": "https://www.isover.fr/guides/materiaux-isolants/comment-choisir-son-isolant/lisolant-biosource-en-textiles-recycles",
+          "checked_on": "2026-10-04",
+          "scope": "Panneaux 120 × 60 cm, épaisseur 45 mm disponible, applications en murs et contre-cloisons rails/montants. Les détails du DTA et la gestion de vapeur restent à appliquer."
+        },
+        {
+          "title": "Leroy Merlin — Carrelage Arcano, référence 95985488",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-effet-beton-gris-arcano-l-60-x-l-60-cm-stn-1-08m2-95985488.html",
+          "checked_on": "2026-10-04",
+          "scope": "Conditionnement 1,08 m², destination sol intérieur, classes R9/A ; aucun choix automatique pour un receveur carrelé."
         }
       ]
     }

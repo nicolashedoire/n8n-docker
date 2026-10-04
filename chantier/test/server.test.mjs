@@ -24,7 +24,7 @@ test('HTTP tools expose a dated limited catalogue and a model-free health check'
   let externalCalls = 0;
   const server = await app(t, async () => { externalCalls++; throw new Error('unexpected'); });
   const health = await (await fetch(server.url + '/health')).json();
-  assert.equal(health.model, null); assert.equal(health.catalog_products, 7);
+  assert.equal(health.model, null); assert.equal(health.catalog_products, catalog.products.length);
   const search = await server.post('/tools/search', { query: 'carrelage', category: 'tile' });
   assert.equal(search.status, 200);
   assert.equal(search.data.search_scope, 'curated_catalog_only');

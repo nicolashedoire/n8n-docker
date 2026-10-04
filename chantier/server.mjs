@@ -29,7 +29,7 @@ function exactSourceUrl(product) {
     const url = new URL(product.source_url);
     if (url.protocol !== 'https:' || url.username || url.password || (url.port && url.port !== '443')) return null;
     // Catalogue entries are the complete URL allowlist; callers cannot supply URLs.
-    if (!['www.leroymerlin.fr', 'leroymerlin.fr'].includes(url.hostname)) return null;
+    if (!['www.leroymerlin.fr', 'leroymerlin.fr', 'www.entrepot-du-bricolage.fr', 'www.bricorama.fr'].includes(url.hostname)) return null;
     return url.href;
   } catch { return null; }
 }

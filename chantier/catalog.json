@@ -3,9 +3,9 @@
   "currency": "EUR",
   "snapshot_date": "2026-10-04",
   "catalogue_mode": "curated_snapshot",
-  "price_notice": "Prix affichés sur les fiches consultées le 4 octobre 2026, éco-participation comprise lorsqu'elle est affichée. Prix, disponibilité, frais et magasin à revérifier avant achat. Aucun stock en temps réel ni commande automatique.",
+  "price_notice": "Prix affichés sur les fiches consultées le 4 octobre 2026, éco-participation comprise lorsqu’elle est affichée. Le rail PLACO utilise un prix conseillé Bricorama. Prix de vente local, conditionnements, disponibilité, frais et magasin à revérifier avant achat. Aucun stock en temps réel ni commande automatique.",
   "package_convention": "price.amount est le prix du conditionnement entier. pack.quantity compte les unités dans ce conditionnement. coverage_m2 est la couverture TOTALE du conditionnement, jamais par unité. Les dimensions sont celles d'une unité, nominales pour le carrelage.",
-  "compatibility_notice": "Les usages ci-dessous servent au filtrage d'un métré estimatif. Ils ne certifient ni un assemblage multimarque ni la conformité de l'ouvrage. Les hauteurs et performances fabricant dépendent du système complet.",
+  "compatibility_notice": "Les usages servent au filtrage d’un métré estimatif. Le scénario salle de bains sélectionne plaques et profils PLACO avec un isolant ISOVER ; le panier incomplet ne certifie pas un ouvrage installé. Les anciens produits multimarques restent réservés à leur périmètre initial.",
   "products": [
     {
       "id": "tile_arcano_95985488",
@@ -30,7 +30,8 @@
         "width_m": 0.6
       },
       "compatible_uses": [
-        "tiling"
+        "tiling",
+        "bathroom"
       ],
       "metadata": {
         "room_types": [
@@ -72,7 +73,8 @@
         "width_m": 0.6
       },
       "compatible_uses": [
-        "tiling"
+        "tiling",
+        "bathroom"
       ],
       "metadata": {
         "room_types": [
@@ -291,6 +293,176 @@
         "exterior_thermal_design": false,
         "wet_use_note": "Isolant abrité dans la cavité d'une paroi protégée ; ce classement de filtrage ne signifie pas résistance à une exposition directe à l'eau.",
         "manufacturer_background_url": "https://www.isover.fr/laine-de-verre/laine-de-verre-45mm"
+      }
+    },
+    {
+      "snapshot_date": "2026-10-04",
+      "compatible_uses": [
+        "lining",
+        "bathroom"
+      ],
+      "id": "board_placomarine_h1_2500x600",
+      "name": "Placomarine BA13 hydrofuge H1 PLACO 250 × 60 cm",
+      "category": "board",
+      "source_url": "https://www.entrepot-du-bricolage.fr/p/pr-plaque-de-platre-hydrofuge-ba13-pour-piece-humide-h-250-x-l-60-cm-placo-13895",
+      "retailer_reference": "13895",
+      "seller": "L’Entrepôt du Bricolage",
+      "price": {
+        "amount": 14.85,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 9.9
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "board",
+        "label": "1 plaque de 1,50 m²",
+        "coverage_m2": 1.5,
+        "length_m": 2.5,
+        "width_m": 0.6,
+        "height_m": 2.5
+      },
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "bathroom_lining_placo_m48_double_600"
+        ],
+        "manufacturer": "PLACO",
+        "moisture_resistance": "H1",
+        "thickness_mm": 12.5,
+        "heavy_load_support": false,
+        "manufacturer_background_url": "https://www.placo.fr/Produits/plaques/placomarine-ba-13",
+        "wet_use_note": "Parement H1 de doublage en salle de bains privative. La plaque seule ne remplace ni les joints adaptés ni la protection à l’eau des zones exposées."
+      }
+    },
+    {
+      "snapshot_date": "2026-10-04",
+      "compatible_uses": [
+        "lining",
+        "bathroom"
+      ],
+      "id": "rail_placo_r48_3000",
+      "name": "Rail PLACO Stil R48 NF de 3 m",
+      "category": "rail",
+      "source_url": "https://www.bricorama.fr/p/rail-placor-stilr-r-48-nf-3m/3496250071520",
+      "retailer_reference": "3496250071520",
+      "seller": "Bricorama",
+      "price": {
+        "amount": 8.1,
+        "unit": "pack",
+        "currency": "EUR",
+        "kind": "recommended_retail_price",
+        "notice": "Prix conseillé affiché, prix de vente local à confirmer.",
+        "basis": "retailer_recommended"
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "rail",
+        "label": "1 rail de 3 m",
+        "length_m": 3,
+        "width_m": 0.048
+      },
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "bathroom_lining_placo_m48_double_600"
+        ],
+        "manufacturer": "PLACO",
+        "profile_width_mm": 48,
+        "material": "acier galvanisé",
+        "manufacturer_background_url": "https://www.placo.fr/Produits/profiles/rail-stil-r-48",
+        "wet_use_note": "Ossature standard dans le périmètre privatif, avec protections de pied et fixations adaptées à définir."
+      }
+    },
+    {
+      "snapshot_date": "2026-10-04",
+      "compatible_uses": [
+        "lining",
+        "bathroom"
+      ],
+      "id": "stud_placo_m48_2790",
+      "name": "Montant PLACO Stil M48 de 2,79 m",
+      "category": "stud",
+      "source_url": "https://www.entrepot-du-bricolage.fr/p/pr-montant-stil-m48-l-2-79-m-l-48-x-ep-35-mm-placo-32866",
+      "retailer_reference": "32866",
+      "seller": "L’Entrepôt du Bricolage",
+      "price": {
+        "amount": 5.5,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m": 1.97
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "stud",
+        "label": "1 montant de 2,79 m à recouper",
+        "length_m": 2.79,
+        "width_m": 0.048,
+        "height_m": 2.79
+      },
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "bathroom_lining_placo_m48_double_600"
+        ],
+        "manufacturer": "PLACO",
+        "profile_width_mm": 48,
+        "material": "acier galvanisé",
+        "ceiling_compatible": false,
+        "cutting_note": "Longueur achetée suffisante pour une hauteur d’ouvrage supposée de 2,50 m, à recouper selon le jeu de pose fabricant. Aucun raboutage automatique. Montants comptés par paires dans le scénario de doublage."
+      }
+    },
+    {
+      "snapshot_date": "2026-10-04",
+      "compatible_uses": [
+        "lining",
+        "bathroom"
+      ],
+      "id": "insulation_isocoton_45mm",
+      "name": "ISOVER Isocoton 45 mm — lot de 13 panneaux 120 × 60 cm",
+      "category": "insulation",
+      "source_url": "https://www.leroymerlin.fr/produits/13-panneaux-isolants-en-textiles-recycles-isover-isocoton-ep-45mm-1-2x0-6m-r1-25-91782738.html",
+      "retailer_reference": "91782738",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 64.58,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 6.9
+      },
+      "pack": {
+        "quantity": 13,
+        "unit": "panel",
+        "label": "lot de 13 panneaux de 120 × 60 cm",
+        "coverage_m2": 9.36,
+        "length_m": 1.2,
+        "width_m": 0.6
+      },
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "bathroom_lining_placo_m48_double_600"
+        ],
+        "manufacturer": "ISOVER",
+        "thickness_mm": 45,
+        "purpose": "provision de remplissage intérieur à visée acoustique, sans performance garantie",
+        "vapour_barrier": false,
+        "exterior_thermal_design": false,
+        "manufacturer_background_url": "https://www.isover.fr/guides/materiaux-isolants/comment-choisir-son-isolant/lisolant-biosource-en-textiles-recycles",
+        "package_note": "La fiche marchande annonce explicitement 13 panneaux, une couverture totale de 9,36 m² et un prix par lot entier.",
+        "wet_use_note": "Isolant dans une cavité protégée de l’eau. Pare-vapeur/gestion de vapeur et support à vérifier selon le mur ; aucun dimensionnement thermique extérieur."
       }
     }
   ]
