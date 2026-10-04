@@ -64,7 +64,7 @@ La surface du sol reste de **12 m²** et le périmètre de **14 m**. La surface 
 
 Cette suite montre une limite prise en charge : l'agent ne doit ni perdre les dimensions précédentes, ni bloquer tous les postes parce qu'un seul sort du périmètre disponible. Pour une démonstration centrée sur la première estimation, le premier message suffit.
 
-## Ce qui se passe dans les huit nœuds
+## Les huit nœuds du parcours normal et la branche d’incident
 
 | Nœud | Ce qu'il fait dans ce scénario |
 | --- | --- |
@@ -78,6 +78,8 @@ Cette suite montre une limite prise en charge : l'agent ne doit ni perdre les di
 | **Calculer les quantités** | Calcule les mesures, les quantités arrondies et les sous-totaux ; distingue les postes calculables des postes à revoir. |
 
 Les quatre outils sont reliés à l'agent comme des capacités disponibles. Ce ne sont pas quatre étapes que le workflow exécute systématiquement de gauche à droite. Pour montrer le raisonnement observable, ouvrir les journaux de l'exécution et lire les paramètres et résultats des appels réellement effectués.
+
+Un **neuvième nœud, Expliquer l’incident**, complète maintenant ce parcours. Il est relié uniquement à la sortie d'erreur de l'agent et reste donc inactif lors d'une estimation réussie. Il affiche une réponse compréhensible sans modèle, sans prix inventé et avec une référence d'incident. Voir [l’exploitation et les essais de panne](EXPLOITATION.md).
 
 ## Le code à expliquer simplement
 
@@ -128,6 +130,12 @@ L'appel modèle en échec a duré environ **10,5 secondes**, alors que le délai
 Une formulation de la réponse **88** reste ambiguë : « Sol brut hors emprise non mesurée du receveur ». La donnée vérifiée du calculateur est bien **12 m² bruts, avant toute déduction du receveur** ; la quantité de 13 cartons ne déduit aucune emprise inconnue. C'est cette formulation précise qu'il faut utiliser à l'oral.
 
 ### Vérification manuelle dans l'éditeur n8n
+
+**Vérification finale de la version publiée à neuf nœuds :** le 4 octobre à 17 h 20, le même message court a réussi dans l’éditeur en **17,101 secondes**. Les quatre outils ont été appelés ; la réponse affiche les cinq liens fournisseurs, les hypothèses, les exclusions et le total partiel de **1 316,41 €**. Cette version utilise deux tentatives au niveau de l’Agent et aucune reprise implicite côté modèle. Le nœud d’incident reste gris : c’est normal, puisqu’aucune panne n’a été rencontrée sur cet essai.
+
+![Workflow final publié à neuf nœuds : le parcours normal a réussi et la branche Expliquer l’incident reste disponible](images/salle-de-bains/04-workflow-avec-incidents.png)
+
+Les captures suivantes conservent la vérification précédente du parcours normal, avant l’ajout de la branche d’incident.
 
 Le même premier message a ensuite été saisi directement dans le chat de l'éditeur. L'exécution **89** a réussi en **15,011 secondes** selon n8n. Les **quatre outils ont été appelés** et les **huit nœuds apparaissent en vert**. La réponse retrouve **1 316,41 €**, avec les mêmes quantités : 13 cartons, 26 plaques H1, 14 rails, 62 montants et 5 lots d'isolant.
 

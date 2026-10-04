@@ -47,7 +47,10 @@
           "enableStreaming": false
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
     },
     {
       "id": "74cd9b0bf70436a85430366e8817f99b",
@@ -68,7 +71,7 @@
         "options": {
           "reasoningEffort": "low",
           "timeout": 60000,
-          "maxRetries": 1,
+          "maxRetries": 0,
           "extraBody": "{\"store\":false}"
         }
       }

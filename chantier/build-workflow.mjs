@@ -17,10 +17,10 @@ add('Décrire mon chantier','@n8n/n8n-nodes-langchain.chatTrigger',1.5,[-440,0],
 add('Agent achats chantier','@n8n/n8n-nodes-langchain.agent',3.1,[-100,0],{
   promptType:'auto',hasOutputParser:false,
   options:{systemMessage,maxIterations:8,returnIntermediateSteps:true,enableStreaming:false}
-},{onError:'continueErrorOutput'});
+},{onError:'continueErrorOutput',retryOnFail:true,maxTries:2,waitBetweenTries:1000});
 add('Modèle OpenAI','@n8n/n8n-nodes-langchain.lmChatOpenAi',1.3,[-520,240],{
   model:{__rl:true,mode:'id',value:'gpt-5.6-terra'},responsesApiEnabled:true,
-  options:{reasoningEffort:'low',timeout:60000,maxRetries:1,extraBody:'{"store":false}'}
+  options:{reasoningEffort:'low',timeout:60000,maxRetries:0,extraBody:'{"store":false}'}
 });
 add('Mémoire de la conversation','@n8n/n8n-nodes-langchain.memoryBufferWindow',1.4,[-280,240],{
   sessionIdType:'customKey',sessionKey:'={{ $json.sessionId }}',contextWindowLength:8

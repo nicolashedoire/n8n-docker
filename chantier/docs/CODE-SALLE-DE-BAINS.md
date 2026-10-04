@@ -89,3 +89,13 @@ Le modèle lit le résultat structuré et rédige le tableau. C'est aussi lui qu
 Les paramètres, résultats et étapes intermédiaires sont visibles dans les journaux n8n. Ils permettent de distinguer une erreur de compréhension du modèle, une règle métier qui refuse un cas, un problème de données fournisseur et une panne réseau. Les tests de conversation vérifient ces appels réels ; les tests de code vérifient les calculs indépendamment du modèle.
 
 À dire en entretien : « J'ai séparé la conversation et les opérations vérifiables. L'agent organise le travail ; les outils portent les sources, les contrôles et les calculs. »
+
+## 9. Répondre même lorsque le modèle échoue
+
+Le nœud `Expliquer l’incident` exécute [incident-response.js](../incident-response.js) dans le contexte Code de n8n. Ce fichier contient un `return` au niveau du corps du nœud : il est chargé comme code n8n, pas exécuté comme programme Node autonome. Les tests le compilent avec ses paramètres `$input` et `$execution`.
+
+Le code lit l'erreur reçue, la classe dans quelques catégories connues, puis construit une phrase prédéfinie. Il ne copie jamais le diagnostic brut dans le chat. Cela évite d'afficher par accident une clé, une pile d'appels ou des détails de requête. Si une formulation inconnue arrive, il utilise la catégorie générique `SERVICE_UNAVAILABLE`.
+
+`retryable` indique si l'utilisateur peut raisonnablement retenter ou s'il faut d'abord vérifier le compte. Une référence `chantier-<identifiant d’exécution>` relie le message aux journaux locaux. `status: technical_error` permet de distinguer une panne traitée d'une estimation réussie, même si n8n termine proprement le workflow.
+
+Cette réponse ne dépend pas du modèle en panne. La politique de reprise et les essais réels de ce branchement sont documentés dans [EXPLOITATION.md](EXPLOITATION.md).

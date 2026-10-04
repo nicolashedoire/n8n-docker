@@ -54,7 +54,7 @@ Chat → AI Agent → réponse dans le chat
                 └── /tools/estimate
 ```
 
-- `workflow.json` : export public des huit nœuds et de deux notes. Aucune clé ni référence privée de connexion.
+- `workflow.json` : huit nœuds du parcours, une branche de réponse aux incidents et deux notes. Aucune clé ni référence privée de connexion.
 - `build-workflow.mjs` : construit l’export et sa copie locale avec la connexion n8n.
 - `agent-prompt.txt` : rôle, questions, choix des outils et présentation des résultats.
 - `catalog.json` : produits de plusieurs fournisseurs, sourcés, prix du conditionnement entier, dimensions et date du relevé.
@@ -64,6 +64,7 @@ Chat → AI Agent → réponse dans le chat
 - `test/` : tests de calcul et du service, sans appel à OpenAI.
 - `test-agent.mjs` : quatre tours historiques de conversation, lancés explicitement avec `--run`.
 - `test-agent-room.mjs` : salle de bains depuis les seules dimensions, puis douche et changement de hauteur dans la même session.
+- `incident-response.js` : réponse déterministe après incident de l'agent, sans nouveau modèle ni copie du diagnostic brut.
 - `extract-execution.mjs` : lecture seule des traces n8n, limitée au nouveau workflow et aux sessions de test fictives.
 
 Le modèle est appelé par le nœud natif n8n. Le service d’outils ne reçoit aucune clé OpenAI. La connexion native est chiffrée dans le stockage n8n. La mémoire est limitée à huit échanges et reste en mémoire : elle n’est pas une base de données métier durable.
@@ -107,4 +108,4 @@ Le total reste partiel : vis, bandes, enduits, fixations, protections à l’eau
 
 Les ports sont liés à `127.0.0.1`. Le chat publié n’a pas d’authentification propre : cette configuration est destinée à une démonstration locale. Une exposition distante demanderait authentification, limitation de débit et de coût, gestion des accès et politique de conservation des conversations.
 
-Voir [le guide d’entretien, nœud par nœud](docs/GUIDE-ENTRETIEN.md), [les sources](docs/SOURCES.md) et [les décisions de conception](docs/CONCEPTION.md).
+Voir [le guide d’entretien, nœud par nœud](docs/GUIDE-ENTRETIEN.md), [le code de la salle de bains expliqué](docs/CODE-SALLE-DE-BAINS.md), [l’exploitation et les incidents](docs/EXPLOITATION.md), [les sources](docs/SOURCES.md) et [les décisions de conception](docs/CONCEPTION.md).

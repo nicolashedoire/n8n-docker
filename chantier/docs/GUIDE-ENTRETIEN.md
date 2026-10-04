@@ -12,7 +12,7 @@ Le problème métier est concret : « refaire une pièce en placo » ne dit pas 
 
 ## Comment lire le dessin n8n
 
-Le générateur crée **huit nœuds fonctionnels**, plus deux notes visuelles. Un lien principal transmet le message du chat à l'agent. Les connexions du modèle, de la mémoire et des outils donnent à cet agent ses capacités ; elles ne représentent pas une liste de quatre appels obligatoirement exécutés dans le même ordre.
+Le générateur crée **huit nœuds pour le parcours normal, un neuvième pour répondre aux incidents**, plus deux notes visuelles. Un lien principal transmet le message du chat à l'agent. Les connexions du modèle, de la mémoire et des outils donnent à cet agent ses capacités ; elles ne représentent pas une liste de quatre appels obligatoirement exécutés dans le même ordre.
 
 ```mermaid
 flowchart LR
@@ -23,13 +23,14 @@ flowchart LR
     Agent -. choisit ses appels .-> Search[Rechercher les matériaux]
     Agent -. choisit ses appels .-> Product[Consulter une fiche fournisseur]
     Agent -. choisit ses appels .-> Estimate[Calculer les quantités]
+    Agent -->|échec technique| Incident[Expliquer l’incident]
 ```
 
 Les noms du schéma sont ceux de [build-workflow.mjs](../build-workflow.mjs). Les deux notes, **Lire ce workflow** et **Sources et calculs**, expliquent le dessin ; elles ne traitent pas les données.
 
 ![Le workflow natif n8n après une exécution réussie](images/workflow-n8n.png)
 
-## Les huit nœuds, un par un
+## Les nœuds, un par un
 
 ### 1. Décrire mon chantier
 
@@ -53,7 +54,9 @@ La configuration limite la boucle à **8 itérations** et demande le retour des 
 
 **Rôle : comprendre les messages et produire les décisions d'appel et la réponse.** Le modèle configuré est `gpt-5.6-terra`, via le nœud OpenAI avec l'API Responses activée.
 
-Les options demandent un effort de raisonnement `low`, un délai de 60 secondes, au plus une nouvelle tentative selon la gestion du nœud, et `store:false` dans le corps supplémentaire. Ce dernier paramètre ne constitue pas, à lui seul, une promesse générale d'absence de toute conservation de données.
+Les options demandent un effort de raisonnement `low`, un délai de 60 secondes et `store:false` dans le corps supplémentaire. Ce dernier paramètre ne constitue pas, à lui seul, une promesse générale d'absence de toute conservation de données.
+
+La reprise est configurée à un seul niveau : le client modèle utilise `maxRetries: 0`, tandis que le nœud Agent autorise **deux tentatives au total**, séparées d'une seconde. Il peut donc relancer le travail après un incident ; chaque tentative peut elle-même effectuer plusieurs appels au modèle et aux outils. Cette politique est non sélective, y compris pour une erreur d'authentification ou de quota. Après le dernier échec, le nœud **Expliquer l’incident** répond sans appeler le modèle. Les essais de reprise et leurs limites figurent dans [le guide d’exploitation](EXPLOITATION.md).
 
 La connexion OpenAI est attachée à l'import local par les identifiants n8n. La clé n'apparaît pas dans l'export public du workflow et n'a pas à être montrée pendant l'entretien.
 
@@ -106,6 +109,10 @@ La fonction `estimate` de [quantities.mjs](../quantities.mjs) ne fait aucun appe
 Elle renvoie soit des quantités, soit des questions, soit un motif de refus. Le mode salle de bains combine sol et murs ; il distingue les valeurs fournies des hypothèses, et peut conserver le sol chiffré lorsque le système de murs est hors périmètre. Les montants d'achat proviennent du prix des conditionnements entiers et les sous-totaux monétaires sont calculés en centimes. Si un prix manque, le total complet reste inconnu : le prix absent n'est pas remplacé par zéro.
 
 La réponse contient aussi les hypothèses et les exclusions. L'agent doit les restituer de façon compréhensible ; un total partiel ne devient pas le prix de rénovation de toute la pièce.
+
+### 9. Expliquer l’incident
+
+La sortie d'erreur de l'agent mène à ce nœud Code. Il s'exécute uniquement en cas d'incident technique et produit une réponse compréhensible avec `status: technical_error`, une catégorie et une référence d'exécution. Il ne rappelle pas le modèle et ne montre ni clé ni diagnostic brut. Un workflow techniquement terminé par cette branche ne signifie pas qu'une estimation a réussi. Les essais et limites sont décrits dans [le guide d’exploitation](EXPLOITATION.md).
 
 ## Pourquoi c'est un agent avec des outils
 
