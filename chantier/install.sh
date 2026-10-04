@@ -17,10 +17,9 @@ cleanup() {
 trap cleanup EXIT
 test -s local-files/openai-api-key || { echo 'Clé OpenAI locale existante requise (local-files/openai-api-key).' >&2; exit 1; }
 node chantier/build-workflow.mjs
+# Embed the current source and locked PDF dependency into the tools image.
+docker compose -f compose.yaml -f compose.chantier.yaml build chantier-api
 bash chantier/start.sh
-# Node loads the mounted source and catalogue at startup; reload existing tools
-# when this installer is used after a code or catalogue change.
-docker compose -f compose.yaml -f compose.chantier.yaml restart chantier-api
 
 TASK_PROJECT_ID="$(docker exec -i "$TASK_CONTAINER" node - <<'JS'
 const {DatabaseSync}=require('node:sqlite');

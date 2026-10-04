@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { estimate, selectRules } from './quantities.mjs';
+import { createReportStore } from './reports.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 65_536;
@@ -129,12 +130,24 @@ export function createToolServer(options = {}) {
   const rules = clone(options.rules ?? JSON.parse(readFileSync(resolve(HERE, 'rules.json'), 'utf8')));
   validateCatalog(catalog);
   if (!Array.isArray(rules.rules)) throw new Error('Règles structurées requises.');
+  const reports = createReportStore({
+    reportDir: options.reportDir ?? process.env.REPORT_DIR,
+    reportPublicBaseUrl: options.reportPublicBaseUrl ?? process.env.REPORT_PUBLIC_BASE_URL,
+    renderReport: options.renderReport, reportTimeoutMs: options.reportTimeoutMs, now: options.now,
+  });
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     const send = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); };
     try {
       const url = new URL(req.url, 'http://local.invalid');
+      if (req.method === 'GET' && url.pathname.startsWith('/reports/')) {
+        const report = await reports.read(url.pathname);
+        if (!report) return send(404, { error: { code: 'report_not_found', message: 'Rapport introuvable.' } });
+        res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Length': report.pdf.length,
+          'Content-Disposition': `attachment; filename="${report.filename}"`, 'Referrer-Policy': 'no-referrer' });
+        return res.end(report.pdf);
+      }
       if (req.method === 'GET' && url.pathname === '/health') return send(200, { status: 'ok', service: 'chantier-tools', catalog_products: catalog.products.length,
         catalog_snapshot_date: catalog.snapshot_date, model: null, price_mode: 'catalog_snapshot', no_order_placed: true });
       if (req.method !== 'POST' || !['/tools/rules', '/tools/search', '/tools/product', '/tools/estimate'].includes(url.pathname)) return send(404, { error: { code: 'not_found', message: 'Outil inconnu.' } });
@@ -167,7 +180,9 @@ export function createToolServer(options = {}) {
           estimate_price_basis: 'catalog_snapshot',
           note: 'La consultation en ligne ne modifie pas le catalogue. Le calcul déterministe utilise toujours les prix du relevé daté ; un éventuel prix live est affiché séparément.' });
       }
-      return send(200, estimate(input, catalog, rules));
+      const result = estimate(input, catalog, rules);
+      const report = await reports.create({ input, estimate: result, catalog });
+      return send(200, { ...result, report });
     } catch (error) {
       if (res.headersSent) return res.end();
       send(error instanceof HttpError ? error.status : 500, { error: {

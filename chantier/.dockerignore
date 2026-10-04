@@ -1,0 +1,10 @@
+*
+!Dockerfile
+!package.json
+!package-lock.json
+!server.mjs
+!quantities.mjs
+!reports.mjs
+!pdf-report.mjs
+!catalog.json
+!rules.json

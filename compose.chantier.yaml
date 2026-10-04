@@ -1,7 +1,9 @@
-# Independent read-only tools for the construction purchasing agent.
+# Local tools and deterministic PDF reports for the construction purchasing agent.
 services:
   chantier-api:
-    image: node:22-bookworm-slim
+    build:
+      context: ./chantier
+    image: atelier-chantier-tools:local
     working_dir: /app
     command: ["node", "server.mjs"]
     restart: unless-stopped
@@ -10,8 +12,10 @@ services:
     environment:
       PORT: "3000"
       HOST: "0.0.0.0"
+      REPORT_DIR: "/reports"
+      REPORT_PUBLIC_BASE_URL: "http://localhost:8788"
     volumes:
-      - ./chantier:/app:ro
+      - ./local-files/chantier-reports:/reports
     read_only: true
     tmpfs:
       - /tmp

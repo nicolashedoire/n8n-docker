@@ -8,6 +8,8 @@ Ouvrir [le workflow dans n8n](http://localhost:5678/workflow/atelierAgentChantie
 
 Le parcours de cette version propose une première estimation avant de demander des précisions. Il utilise les deux dimensions données, puis annonce les hypothèses nécessaires. L'utilisateur peut ensuite corriger une hauteur, retirer un poste ou préciser une ouverture en langage naturel.
 
+La réponse propose également **Télécharger l’étude PDF**. Le rapport reprend les mêmes données et hypothèses, avec les sources cliquables. Voir [le guide de l’export PDF](GUIDE-PDF.md).
+
 Il ne faut pas recopier des noms de produits, des paramètres d'ossature ou un objet JSON. Ces éléments appartiennent aux outils et aux règles du projet.
 
 ## Ce que signifie le premier résultat

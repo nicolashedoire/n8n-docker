@@ -42,6 +42,12 @@ Le moteur recalcule la surface des murs, conserve le sol et indique qu’un autr
 
 Voir le [conducteur de démonstration salle de bains](docs/DEMO-SALLE-DE-BAINS.md). Les scénarios historiques de cloison et de carrelage seul restent expliqués dans le [guide nœud par nœud](docs/GUIDE-ENTRETIEN.md).
 
+## Récupérer l’étude en PDF
+
+Après une estimation, cliquer sur **Télécharger l’étude PDF** dans le chat. Le document de trois pages pour le scénario salle de bains reprend les mesures, hypothèses, matériaux, prix et sources du calculateur. Une modification produit un nouveau rapport ; les précédents restent inchangés. Les fichiers restent sur le Mac dans `local-files/chantier-reports/` et ne sont pas commités. Le lien local n’est pas un lien de partage public.
+
+Le workflow conserve ses neuf nœuds et quatre outils. L’API crée le document directement après le calcul, sans nouvel appel au modèle. Voir [le guide PDF illustré](docs/GUIDE-PDF.md).
+
 ## Architecture et fichiers
 
 ```text
@@ -66,6 +72,9 @@ Chat → AI Agent → réponse dans le chat
 - `test-agent.mjs` : quatre tours historiques de conversation, lancés explicitement avec `--run`.
 - `test-agent-room.mjs` : salle de bains depuis les seules dimensions, puis douche et changement de hauteur dans la même session.
 - `incident-response.js` : réponse déterministe après incident de l'agent, sans nouveau modèle ni copie du diagnostic brut.
+- `pdf-report.mjs` : mise en page PDF à partir du résultat structuré du calculateur.
+- `reports.mjs` : sauvegarde des instantanés, liens opaques et téléchargement local.
+- `Dockerfile`, `package.json`, `package-lock.json` : image du service avec code et dépendance PDFKit verrouillée.
 - `extract-execution.mjs` : lecture seule des traces n8n, limitée au nouveau workflow et aux sessions de test fictives.
 
 Le modèle est appelé par le nœud natif n8n. Le service d’outils ne reçoit aucune clé OpenAI. La connexion native est chiffrée dans le stockage n8n. La mémoire est limitée à huit échanges et reste en mémoire : elle n’est pas une base de données métier durable.
@@ -85,6 +94,7 @@ Pour importer ailleurs : lancer le service `chantier-api` sur le réseau Docker 
 ## Vérifier
 
 ```sh
+npm --prefix chantier ci --ignore-scripts --no-fund
 node --test chantier/test/*.test.mjs
 node chantier/test-agent-room.mjs --dry-run
 # Appels OpenAI réels, facturables sur la connexion existante :
