@@ -6,6 +6,7 @@ Ce projet est autonome dans `chantier/`, sur la branche `feat/agent-achats-chant
 
 ## Ouvrir la démonstration installée
 
+- [Guide illustré dans Notion](https://app.notion.com/p/3efce9b72fb78126ac58dabefbad8d47)
 - [Workflow dans n8n](http://localhost:5678/workflow/atelierAgentChantier01)
 - [Conversation avec l’agent](http://localhost:5678/webhook/atelier-agent-chantier/chat)
 - [État du service d’outils](http://localhost:8788/health)
