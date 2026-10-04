@@ -17,7 +17,7 @@ add('Décrire mon chantier','@n8n/n8n-nodes-langchain.chatTrigger',1.5,[-440,0],
 add('Agent achats chantier','@n8n/n8n-nodes-langchain.agent',3.1,[-100,0],{
   promptType:'auto',hasOutputParser:false,
   options:{systemMessage,maxIterations:8,returnIntermediateSteps:true,enableStreaming:false}
-});
+},{onError:'continueErrorOutput'});
 add('Modèle OpenAI','@n8n/n8n-nodes-langchain.lmChatOpenAi',1.3,[-520,240],{
   model:{__rl:true,mode:'id',value:'gpt-5.6-terra'},responsesApiEnabled:true,
   options:{reasoningEffort:'low',timeout:60000,maxRetries:1,extraBody:'{"store":false}'}
@@ -44,6 +44,9 @@ tool('Consulter une fiche fournisseur',500,'product',
 tool('Calculer les quantités',760,'estimate',
   'Calcul déterministe des quantités et prix. BATHROOM (pièce entière): calculation={project_type:"bathroom",length_m:number,width_m:number}. Ces deux dimensions suffisent à une estimation provisoire. Paramètres facultatifs UNIQUEMENT si fournis/confirmés par utilisateur: height_m,margin_pct,budget_eur,openings:[{wall_index:0,width_m,height_m}],include_insulation,wall_finish:"light"|"tile"|"heavy",water_exposure:"unknown"|"outside_direct_spray"|"direct_shower_spray"|"shower_tray". product_ids:{tile,board,rail,stud,insulation} peut contenir les identifiants du catalogue sélectionnés après règles/recherche. Omettre les dimensions/options inconnues: le calculateur les expose comme hypothèses, sans les faire passer pour des faits. Calcule lui-même sol, périmètre, quatre murs à une face, quantités et total partiel. Une hauteur hors système peut retourner partial avec sol conservé et murs non chiffrés. AUTRES PROJETS: project_type tiling|partition|lining,room_type dry|wet,margin_pct,budget_eur facultatif; wet exige room_usage private_bathroom et water_exposure outside_direct_spray. tiling: surface_m2,product_ids:{tile}. partition: wall_lengths_m,height_m,openings,layers:1,wall_finish:"light",stud_spacing_m:0.6,framing_system depuis règles,product_ids:{board,rail,stud,insulation?}. Respecter la portée exacte du résultat et les exclusions.',
   '={{ $fromAI("calculation", "Objet JSON du calcul. Pour bathroom: longueur et largeur connues suffisent; ne renseigner la hauteur/marge/ouvertures/budget que si l’utilisateur les a indiqués. Les défauts proviennent du moteur et sont annoncés comme hypothèses. Voir contrat de l’outil.", "json") }}');
+add('Expliquer l’incident','n8n-nodes-base.code',2,[400,0],{
+  mode:'runOnceForAllItems',jsCode:readFileSync(resolve(root,'chantier/incident-response.js'),'utf8')
+});
 add('Lire ce workflow','n8n-nodes-base.stickyNote',1,[-560,-290],{
   content:'## 🧱 Une demande suffit pour commencer\n**À copier seul dans le chat :**\n« Je refais ma salle de bains de 4 m sur 3 m. »\n\nL’agent propose une première liste, indique ses hypothèses et pose une question utile pour affiner. Les outils sont appelés selon le besoin.\n**Pour tester la mémoire :** attendre la réponse, puis envoyer « En fait, la hauteur est de 2,70 m. »',height:230,width:720,color:4
 });
@@ -52,6 +55,7 @@ add('Sources et calculs','n8n-nodes-base.stickyNote',1,[220,-290],{
 });
 const connections={
   'Décrire mon chantier':{main:[[{node:'Agent achats chantier',type:'main',index:0}]]},
+  'Agent achats chantier':{main:[[],[{node:'Expliquer l’incident',type:'main',index:0}]]},
   'Modèle OpenAI':{ai_languageModel:[[{node:'Agent achats chantier',type:'ai_languageModel',index:0}]]},
   'Mémoire de la conversation':{ai_memory:[[{node:'Agent achats chantier',type:'ai_memory',index:0}]]}
 };
@@ -62,4 +66,4 @@ const local=structuredClone(workflow);
 local.nodes.find(n=>n.name==='Modèle OpenAI').credentials={openAiApi:{id:'atelierChantierOpenAI',name:'OpenAI · Agent achats chantier'}};
 mkdirSync(resolve(root,'local-files'),{recursive:true});
 writeFileSync(resolve(root,'local-files/03-agent-achats-chantier.json'),JSON.stringify(local,null,2)+'\n',{mode:0o600});
-console.log('Workflow créé : 8 nœuds exécutables + 2 notes. Export public sans identifiant de connexion.');
+console.log('Workflow créé : 8 nœuds du parcours + 1 réponse aux incidents + 2 notes. Export public sans identifiant de connexion.');
