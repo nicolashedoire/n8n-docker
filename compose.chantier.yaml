@@ -1,0 +1,22 @@
+# Independent read-only tools for the construction purchasing agent.
+services:
+  chantier-api:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: ["node", "server.mjs"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8788:3000"
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+    volumes:
+      - ./chantier:/app:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

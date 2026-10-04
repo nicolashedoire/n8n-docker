@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "currency": "EUR",
+  "snapshot_date": "2026-10-04",
+  "catalogue_mode": "curated_snapshot",
+  "price_notice": "Prix affichés sur les fiches consultées le 4 octobre 2026, éco-participation comprise lorsqu'elle est affichée. Prix, disponibilité, frais et magasin à revérifier avant achat. Aucun stock en temps réel ni commande automatique.",
+  "package_convention": "price.amount est le prix du conditionnement entier. pack.quantity compte les unités dans ce conditionnement. coverage_m2 est la couverture TOTALE du conditionnement, jamais par unité. Les dimensions sont celles d'une unité, nominales pour le carrelage.",
+  "compatibility_notice": "Les usages ci-dessous servent au filtrage d'un métré estimatif. Ils ne certifient ni un assemblage multimarque ni la conformité de l'ouvrage. Les hauteurs et performances fabricant dépendent du système complet.",
+  "products": [
+    {
+      "id": "tile_arcano_95985488",
+      "name": "Carrelage Arcano gris STN 60 × 60 cm",
+      "category": "tile",
+      "source_url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-effet-beton-gris-arcano-l-60-x-l-60-cm-stn-1-08m2-95985488.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "95985488",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 11.77,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 10.9
+      },
+      "pack": {
+        "quantity": 3,
+        "unit": "tile",
+        "label": "carton de 3 carreaux",
+        "coverage_m2": 1.08,
+        "length_m": 0.6,
+        "width_m": 0.6
+      },
+      "compatible_uses": [
+        "tiling"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "destinations": [
+          "interior_floor",
+          "interior_wall"
+        ],
+        "thickness_mm": 9.5,
+        "material": "grès cérame",
+        "slip_shod": "R9",
+        "slip_barefoot": "A",
+        "pool_compatible": false,
+        "wet_use_note": "Quantité de carreaux seulement ; aucun agrément de receveur de douche, de protection à l'eau ou de sol public humide."
+      }
+    },
+    {
+      "id": "tile_verve_83275585",
+      "name": "Carrelage Verve gris STN 60 × 60 cm",
+      "category": "tile",
+      "source_url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-mur-interieur-effet-beton-gris-verve-l-60-x-l-60-cm-83275585.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "83275585",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 14.73,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 13.9
+      },
+      "pack": {
+        "quantity": 3,
+        "unit": "tile",
+        "label": "carton de 3 carreaux",
+        "coverage_m2": 1.06,
+        "length_m": 0.6,
+        "width_m": 0.6
+      },
+      "compatible_uses": [
+        "tiling"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "destinations": [
+          "interior_floor",
+          "interior_wall"
+        ],
+        "thickness_mm": 9.5,
+        "material": "grès cérame",
+        "slip_shod": "R9",
+        "slip_barefoot": "A",
+        "pool_compatible": false,
+        "coverage_note": "La fiche annonce 1,06 m² par carton : cette valeur prime sur le calcul à partir des dimensions nominales 60 × 60.",
+        "wet_use_note": "Quantité de carreaux seulement ; aucun agrément de receveur de douche, de protection à l'eau ou de sol public humide."
+      }
+    },
+    {
+      "id": "board_standard_2500x1200",
+      "name": "Plaque BA13 standard CE HOME PRATIK 250 × 120 cm",
+      "category": "board",
+      "source_url": "https://www.leroymerlin.fr/produits/plaque-de-platre-ba-13-standard-ce-l-250-x-l-120-cm-69051871.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "69051871",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 8.19,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 2.73
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "board",
+        "label": "1 plaque",
+        "coverage_m2": 3,
+        "length_m": 2.5,
+        "width_m": 1.2,
+        "height_m": 2.5
+      },
+      "compatible_uses": [
+        "partition",
+        "lining"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry"
+        ],
+        "framing_systems": [
+          "partition_m48_single_600"
+        ],
+        "moisture_resistance": "standard",
+        "thickness_mm": 12.5,
+        "board_height_note": "height_m désigne la hauteur utile nominale en pose verticale ; l'épaisseur de la plaque est 12,5 mm.",
+        "heavy_load_support": false
+      }
+    },
+    {
+      "id": "board_h1_2500x1200",
+      "name": "Plaque BA13 Panelplac hydrofuge H1 NF HOME PRATIK 250 × 120 cm",
+      "category": "board",
+      "source_url": "https://www.leroymerlin.fr/produits/plaque-de-platre-ba-13-panelplac-hydrofuge-h1-l-250-x-120-cm-nf-82369805.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "82369805",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 20.91,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 6.97
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "board",
+        "label": "1 plaque",
+        "coverage_m2": 3,
+        "length_m": 2.5,
+        "width_m": 1.2,
+        "height_m": 2.5
+      },
+      "compatible_uses": [
+        "partition",
+        "lining"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "partition_m48_single_600"
+        ],
+        "moisture_resistance": "H1",
+        "thickness_mm": 12.5,
+        "heavy_load_support": false,
+        "wet_use_note": "H1 convient à la face d'une paroi de local EB+ privatif dans un système approprié. La plaque seule n'assure pas l'étanchéité ; joints, pieds, traversées et finitions restent à définir."
+      }
+    },
+    {
+      "id": "rail_r48_3000",
+      "name": "Rail ISOLPRO R48 de 3 m",
+      "category": "rail",
+      "source_url": "https://www.leroymerlin.fr/produits/rail-de-48-l-3-m-82709661.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "82709661",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 3.8,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m": 1.27
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "rail",
+        "label": "1 rail de 3 m",
+        "length_m": 3,
+        "width_m": 0.048
+      },
+      "compatible_uses": [
+        "partition",
+        "lining"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "partition_m48_single_600"
+        ],
+        "profile_width_mm": 48,
+        "material": "acier galvanisé",
+        "wet_use_note": "Ossature standard uniquement dans le périmètre privatif retenu ; aucune validation d'exposition collective, corrosive ou permanente à l'eau."
+      }
+    },
+    {
+      "id": "stud_m48_2500",
+      "name": "Montant ISOLPRO M48 de 2,5 m",
+      "category": "stud",
+      "source_url": "https://www.leroymerlin.fr/produits/montant-de-48-l-2-5-m-82709664.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "82709664",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 3.8,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m": 1.52
+      },
+      "pack": {
+        "quantity": 1,
+        "unit": "stud",
+        "label": "1 montant de 2,5 m",
+        "length_m": 2.5,
+        "width_m": 0.048,
+        "height_m": 2.5
+      },
+      "compatible_uses": [
+        "partition",
+        "lining"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "partition_m48_single_600"
+        ],
+        "profile_width_mm": 48,
+        "material": "acier galvanisé",
+        "ceiling_compatible": false
+      }
+    },
+    {
+      "id": "insulation_45mm",
+      "name": "ISOVER Cloison Duo nu 45 mm — lot de 2 × 2 rouleaux",
+      "category": "insulation",
+      "source_url": "https://www.leroymerlin.fr/produits/lot-de-2x2-rouleaux-laine-de-verre-cloison-duo-isover-nu-ep-45mm-6-5x0-6m-r1-1-82115946.html",
+      "snapshot_date": "2026-10-04",
+      "retailer_reference": "82115946",
+      "seller": "LEROY MERLIN",
+      "price": {
+        "amount": 51.79,
+        "unit": "pack",
+        "currency": "EUR",
+        "displayed_per_m2": 3.32
+      },
+      "pack": {
+        "quantity": 4,
+        "unit": "roll",
+        "label": "lot de 4 rouleaux de 6,5 × 0,6 m",
+        "coverage_m2": 15.6,
+        "length_m": 6.5,
+        "width_m": 0.6
+      },
+      "compatible_uses": [
+        "partition"
+      ],
+      "metadata": {
+        "room_types": [
+          "dry",
+          "wet"
+        ],
+        "framing_systems": [
+          "partition_m48_single_600"
+        ],
+        "thickness_mm": 45,
+        "thermal_resistance_m2_k_w": 1.1,
+        "lambda_w_m_k": 0.04,
+        "vapour_barrier": false,
+        "purpose": "remplissage acoustique de la cavité d'une cloison",
+        "exterior_thermal_design": false,
+        "wet_use_note": "Isolant abrité dans la cavité d'une paroi protégée ; ce classement de filtrage ne signifie pas résistance à une exposition directe à l'eau.",
+        "manufacturer_background_url": "https://www.isover.fr/laine-de-verre/laine-de-verre-45mm"
+      }
+    }
+  ]
+}

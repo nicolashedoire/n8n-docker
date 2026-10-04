@@ -1,0 +1,559 @@
+{
+  "schema_version": 1,
+  "rules_version": "chantier-v1",
+  "snapshot_date": "2026-10-04",
+  "purpose": "Aide à la préparation d'un achat et au métré estimatif, limitée à un catalogue vérifié manuellement.",
+  "status_semantics": {
+    "allowed": "Calcul estimatif autorisé dans le périmètre, si les champs et conditions sont satisfaits. Ce statut n'est pas un avis de conformité.",
+    "needs_information": "Poser les questions ciblées et ne pas inventer la configuration manquante.",
+    "unsupported": "Hors du périmètre de cette démonstration ; demander une étude adaptée."
+  },
+  "allowed_project_types": [
+    "tiling",
+    "partition",
+    "lining"
+  ],
+  "allowed_room_types": [
+    "dry",
+    "wet",
+    "unknown"
+  ],
+  "unsupported_scopes": [
+    "ceiling",
+    "load_bearing",
+    "exterior_thermal_design",
+    "public_wet_room",
+    "swimming_pool",
+    "fire_rating_design",
+    "certified_acoustic_design",
+    "heavy_hanging_load_design"
+  ],
+  "question_order": [
+    "Distinguer création d'une cloison, doublage d'un mur existant et carrelage.",
+    "Qualifier l'usage de la pièce et de chaque face, la finition et l'exposition à l'eau.",
+    "Relever chaque pan ou sol, ses ouvertures et l'implantation d'ossature.",
+    "Choisir la marge et les références, puis faire confirmer les hypothèses avant le budget."
+  ],
+  "quantity_policy": {
+    "nature": "Formules géométriques et marges d'estimation propres à la démonstration ; elles ne remplacent ni les notices fabricant ni un calepinage.",
+    "net_area": "Somme(length_m × height_m) pour les parois, moins les surfaces d'ouvertures validées ; pour un sol, length_m × width_m. Ne jamais soustraire une ouverture supérieure à son pan.",
+    "tile_packs": "ceil(net_area_m2 × (1 + margin_pct / 100) / product.pack.coverage_m2)",
+    "partition_board_packs": "Prendre le maximum entre ceil(surface_nette × 2 faces × (1 + margin_pct / 100) / surface_une_plaque) et somme(ceil(longueur_pan / largeur_plaque) × 2 faces), puis arrondir au conditionnement entier. Une couche par face et une plaque de hauteur suffisante.",
+    "board_face_allocation": "Si les faces sont chiffrées séparément, calculer les surfaces H1 et standard puis arrondir chaque référence séparément. Avec une seule référence de plaque retenue, elle couvre les 2 faces.",
+    "insulation_packs": "ceil(net_area_m2 × (1 + margin_pct / 100) / product.pack.coverage_m2) : une seule cavité, donc aucune multiplication par 2 faces.",
+    "base_rail_length_m": "2 × somme des longueurs brutes des pans : rail bas + rail haut, sans soustraire les portes.",
+    "rail_packs": "Par pan, compter 2 × ceil(longueur_pan / longueur_rail), sans réemploi idéal des chutes entre le haut et le bas ; sommer, appliquer la marge aux unités et arrondir au conditionnement entier. Les traverses d’huisserie ne sont pas dimensionnées.",
+    "base_stud_units": "Somme sur chaque pan de (ceil(length_m / stud_spacing_m) + 1) × stud_multiplier ; les deux montants d'extrémité sont inclus.",
+    "opening_stud_allowance": "Ajouter 2 montants par ouverture comme provision simplifiée. Cette provision n'est pas un dimensionnement de linteau, d'imposte, de renfort de porte ou de charge.",
+    "stud_packs": "ceil(somme(ceil(longueur_pan / entraxe) + 1 + 2 × ouvertures_pan) × (1 + margin_pct / 100)), puis arrondir au conditionnement entier. La V1 n’autorise que des montants simples ; aucun raboutage automatique.",
+    "price_total": "Somme(packs × price.amount), à partir du prix du pack entier. Un prix absent reste inconnu et ne vaut jamais zéro.",
+    "excluded_items": [
+      "vis",
+      "chevilles et fixations adaptées au support",
+      "bandes et enduits",
+      "joints et protections à l'eau",
+      "renforts et huisseries",
+      "colle et joints de carrelage",
+      "primaire et préparation des supports",
+      "peinture",
+      "main-d'œuvre",
+      "livraison"
+    ],
+    "limitations": [
+      "Les surfaces seules ne produisent pas un plan de coupe : les plaques et rouleaux doivent être calepinés avant achat.",
+      "Les ouvertures et angles complexes peuvent rendre les provisions de profils insuffisantes.",
+      "Une référence en longueur 2,5 m ne permet pas de chiffrer automatiquement un ouvrage plus haut.",
+      "Le calcul des conditionnements peut générer un excédent bien supérieur à la marge demandée."
+    ],
+    "margin_pct": {
+      "minimum": 0,
+      "maximum": 30,
+      "default": 10,
+      "default_is_estimation_choice": true,
+      "notice": "10 % est une hypothèse de chutes modifiable, pas une exigence normative. La géométrie et le mode de coupe peuvent imposer une autre réserve."
+    }
+  },
+  "rules": [
+    {
+      "id": "tiling_dry",
+      "project_type": "tiling",
+      "room_type": "dry",
+      "status": "allowed",
+      "required_fields": [
+        "surface_m2",
+        "margin_pct",
+        "product_ids"
+      ],
+      "supported_scopes": [
+        "Quantité de carreaux pour sol ou mur intérieur à partir de la surface connue."
+      ],
+      "assumptions": [
+        "Surface nette après déduction d'ouvertures uniquement lorsque cette déduction est pertinente.",
+        "Marge de coupe explicite ; conditionnements complets arrondis au supérieur."
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "Colle, primaire, joints, préparation, étanchéité, plinthes et plan de coupe non chiffrés.",
+        "Le choix sol/mur, le support, la glissance et le mode de pose restent à valider avant achat."
+      ],
+      "sources": [
+        {
+          "title": "Leroy Merlin — Arcano gris, référence 95985488",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-effet-beton-gris-arcano-l-60-x-l-60-cm-stn-1-08m2-95985488.html",
+          "checked_on": "2026-10-04"
+        },
+        {
+          "title": "Leroy Merlin — Verve gris, référence 83275585",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-mur-interieur-effet-beton-gris-verve-l-60-x-l-60-cm-83275585.html",
+          "checked_on": "2026-10-04"
+        }
+      ]
+    },
+    {
+      "id": "tiling_wet_private",
+      "project_type": "tiling",
+      "room_type": "wet",
+      "status": "allowed",
+      "required_fields": [
+        "surface_m2",
+        "margin_pct",
+        "product_ids",
+        "room_usage"
+      ],
+      "conditions": {
+        "room_usage": [
+          "private_bathroom"
+        ],
+        "estimate_scope": "tile_quantity_only",
+        "excluded_zones": [
+          "shower_tray",
+          "swimming_pool",
+          "public_wet_room"
+        ]
+      },
+      "supported_scopes": [
+        "Quantité de carreaux de salle de bains privative ; validation technique de la zone et du support séparée."
+      ],
+      "assumptions": [
+        "Le métré des carreaux n'autorise pas leur pose sur un support donné."
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "Aucune validation de receveur de douche, de glissance pieds nus adaptée à la zone, de protection à l'eau ni d'étanchéité.",
+        "Sur un mur en BA13 simple parement, le carrelage 60 × 60 nécessite une étude d'ossature différente du repère à 600 mm.",
+        "Les deux références sélectionnées excluent les usages dans ou autour d'une piscine."
+      ],
+      "sources": [
+        {
+          "title": "Leroy Merlin — Arcano gris, référence 95985488",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-effet-beton-gris-arcano-l-60-x-l-60-cm-stn-1-08m2-95985488.html",
+          "checked_on": "2026-10-04"
+        },
+        {
+          "title": "Leroy Merlin — Verve gris, référence 83275585",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-mur-interieur-effet-beton-gris-verve-l-60-x-l-60-cm-83275585.html",
+          "checked_on": "2026-10-04"
+        },
+        {
+          "title": "Placo — L'Intégrale, juin 2025, p. 194",
+          "url": "https://www.placo.fr/documents/integrale-placo/lintegrale-placor-1.pdf",
+          "checked_on": "2026-10-04",
+          "scope": "Sur cloison à parement simple d'épaisseur au plus 15 mm, une finition en carreaux de surface unitaire supérieure à 1600 cm² limite l'entraxe des montants à 40 cm."
+        },
+        {
+          "title": "Placo — Classement des locaux humides",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        }
+      ]
+    },
+    {
+      "id": "tiling_unknown_room",
+      "project_type": "tiling",
+      "room_type": "unknown",
+      "status": "needs_information",
+      "required_fields": [
+        "room_type",
+        "room_usage",
+        "surface_m2",
+        "margin_pct",
+        "product_ids"
+      ],
+      "questions": [
+        "Quelle pièce et quelle surface souhaitez-vous carreler : sol, mur ou zone de douche ?",
+        "Quelles dimensions et quel taux de chutes faut-il retenir ?"
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre."
+      ],
+      "sources": [
+        {
+          "title": "Leroy Merlin — Arcano gris, référence 95985488",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-effet-beton-gris-arcano-l-60-x-l-60-cm-stn-1-08m2-95985488.html",
+          "checked_on": "2026-10-04"
+        },
+        {
+          "title": "Leroy Merlin — Verve gris, référence 83275585",
+          "url": "https://www.leroymerlin.fr/produits/carrelage-sol-interieur-mur-interieur-effet-beton-gris-verve-l-60-x-l-60-cm-83275585.html",
+          "checked_on": "2026-10-04"
+        }
+      ]
+    },
+    {
+      "id": "partition_dry",
+      "project_type": "partition",
+      "room_type": "dry",
+      "status": "allowed",
+      "required_fields": [
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids"
+      ],
+      "framing": {
+        "system": "partition_m48_single_600",
+        "max_height_m": 2.5,
+        "max_stud_spacing_m": 0.6,
+        "stud_multiplier": 1,
+        "faces": 2,
+        "layers": 1,
+        "profile_width_mm": 48,
+        "board_thickness_mm": 12.5
+      },
+      "conditions": {
+        "wall_finish": [
+          "light"
+        ],
+        "layers": [
+          1
+        ]
+      },
+      "supported_scopes": [
+        "Cloison intérieure non porteuse, droite, une plaque BA13 sur chacune des deux faces.",
+        "Gabarit géométrique M48/R48, montants simples, hauteur au plus 2,50 m, entraxe au plus 0,60 m."
+      ],
+      "assumptions": [
+        "Le système d'ossature doit être choisi explicitement ; la surface seule ne détermine pas les montants.",
+        "Les fixations et renforts dépendent du support et doivent être validés séparément.",
+        "Les ouvertures entraînent un besoin supplémentaire de profils ; le forfait décrit dans quantity_policy n'est pas un détail de pose."
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "Une finition lourde ou carrelée impose une validation distincte de l'ossature.",
+        "Les accessoires de pose, les renforts, les huisseries, les bandes et enduits ne sont pas inclus.",
+        "Le catalogue multimarque n'est pas présenté comme un système Placostil certifié."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Cloison sur ossature Placostil",
+          "url": "https://www.placo.fr/comment-monter-une-cloison-sur-ossature-placostil",
+          "checked_on": "2026-10-04",
+          "scope": "Repère de système fabricant : simple parement, 2 faces, montants M48 simples, entraxe 0,60 m, hauteur 2,50 m. Ce repère ne certifie pas les composants multimarques du catalogue."
+        },
+        {
+          "title": "Placo — L'Intégrale, juin 2025, p. 194",
+          "url": "https://www.placo.fr/documents/integrale-placo/lintegrale-placor-1.pdf",
+          "checked_on": "2026-10-04",
+          "scope": "Sur cloison à parement simple d'épaisseur au plus 15 mm, une finition en carreaux de surface unitaire supérieure à 1600 cm² limite l'entraxe des montants à 40 cm."
+        },
+        {
+          "title": "ISOVER — Applications des laines de verre de 45 mm",
+          "url": "https://www.isover.fr/laine-de-verre/laine-de-verre-45mm",
+          "checked_on": "2026-10-04",
+          "scope": "La gamme PAR PHONIC 45 mm vise l'acoustique des cloisons résidentielles. L'épaisseur seule ne définit pas la performance d'un mur extérieur ni celle d'un ouvrage complet."
+        }
+      ]
+    },
+    {
+      "id": "partition_wet_private",
+      "project_type": "partition",
+      "room_type": "wet",
+      "status": "allowed",
+      "required_fields": [
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids",
+        "room_usage"
+      ],
+      "framing": {
+        "system": "partition_m48_single_600",
+        "max_height_m": 2.5,
+        "max_stud_spacing_m": 0.6,
+        "stud_multiplier": 1,
+        "faces": 2,
+        "layers": 1,
+        "profile_width_mm": 48,
+        "board_thickness_mm": 12.5
+      },
+      "conditions": {
+        "room_usage": [
+          "private_bathroom"
+        ],
+        "wall_finish": [
+          "light"
+        ],
+        "excluded_zones": [
+          "direct_shower_spray",
+          "public_wet_room",
+          "swimming_pool"
+        ]
+      },
+      "supported_scopes": [
+        "Métré estimatif d'une cloison de salle de bains privative, avec choix H1 pour les faces exposées."
+      ],
+      "assumptions": [
+        "Demander l'usage de chaque côté : une face humide ne signifie pas que les deux faces doivent réglementairement être H1.",
+        "Si la V1 utilise un seul produit de plaque pour toute la cloison, proposer deux faces H1 comme option de chiffrage explicitement conservatrice, jamais comme obligation universelle.",
+        "Le système complet de protection à l'eau reste à définir avant achat."
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "H1 ne signifie pas étanche. Joints, pieds, traversées et finitions doivent être traités dans un système approprié.",
+        "Finition carrelée, exposition directe aux projections, local collectif et forte hygrométrie : validation distincte, aucun accord automatique.",
+        "Une plaque seulement indiquée verte ou hydrofuge sans classe H1 ne satisfait pas le filtre retenu."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Cloison sur ossature Placostil",
+          "url": "https://www.placo.fr/comment-monter-une-cloison-sur-ossature-placostil",
+          "checked_on": "2026-10-04",
+          "scope": "Repère de système fabricant : simple parement, 2 faces, montants M48 simples, entraxe 0,60 m, hauteur 2,50 m. Ce repère ne certifie pas les composants multimarques du catalogue."
+        },
+        {
+          "title": "Placo — Classement des locaux humides",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        },
+        {
+          "title": "Placo — L'Intégrale, juin 2025, p. 194",
+          "url": "https://www.placo.fr/documents/integrale-placo/lintegrale-placor-1.pdf",
+          "checked_on": "2026-10-04",
+          "scope": "Sur cloison à parement simple d'épaisseur au plus 15 mm, une finition en carreaux de surface unitaire supérieure à 1600 cm² limite l'entraxe des montants à 40 cm."
+        }
+      ],
+      "questions": [
+        "Quel est l’usage de chacune des deux faces ? Le chiffrage V1 emploie une même référence H1 sur les deux faces comme hypothèse conservatrice."
+      ]
+    },
+    {
+      "id": "partition_unknown_room",
+      "project_type": "partition",
+      "room_type": "unknown",
+      "status": "needs_information",
+      "required_fields": [
+        "room_type",
+        "room_usage",
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids"
+      ],
+      "questions": [
+        "Quelle pièce se trouve de chaque côté de la cloison ?",
+        "Quelle finition est prévue : peinture, papier peint, carrelage ou revêtement lourd ?",
+        "Quelles sont les longueurs, hauteurs et ouvertures de chaque pan ?"
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Cloison sur ossature Placostil",
+          "url": "https://www.placo.fr/comment-monter-une-cloison-sur-ossature-placostil",
+          "checked_on": "2026-10-04",
+          "scope": "Repère de système fabricant : simple parement, 2 faces, montants M48 simples, entraxe 0,60 m, hauteur 2,50 m. Ce repère ne certifie pas les composants multimarques du catalogue."
+        },
+        {
+          "title": "Placo — Classement des locaux humides",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        }
+      ]
+    },
+    {
+      "id": "lining_dry",
+      "project_type": "lining",
+      "room_type": "dry",
+      "status": "needs_information",
+      "required_fields": [
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids"
+      ],
+      "questions": [
+        "S'agit-il de recouvrir un mur existant ou de créer une séparation à deux faces ?",
+        "Quel système fabricant de contre-cloison est retenu : montants simples ou doublés, entraxe, appuis intermédiaires ?",
+        "Quelles sont les longueurs et hauteurs de chaque pan, la nature du support et les ouvertures ?",
+        "L'objectif est-il décoratif, acoustique ou l'isolation thermique d'un mur extérieur ?"
+      ],
+      "supported_scopes": [
+        "Préparation du besoin et comparaison de plaques ; aucun métré d'ossature tant que le système de doublage n'est pas validé."
+      ],
+      "reference_systems": [
+        {
+          "manufacturer": "Placo Stil",
+          "system": "lining_m48_single_600",
+          "faces": 1,
+          "layers": 1,
+          "stud_multiplier": 1,
+          "stud_spacing_m": 0.6,
+          "max_height_m": 2.1,
+          "intermediate_support": false
+        },
+        {
+          "manufacturer": "Placo Stil",
+          "system": "lining_m48_double_600",
+          "faces": 1,
+          "layers": 1,
+          "stud_multiplier": 2,
+          "stud_spacing_m": 0.6,
+          "max_height_m": 2.5,
+          "intermediate_support": false
+        }
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "Les reference_systems sont des repères documentaires, pas des systèmes automatiquement autorisés par le moteur.",
+        "Un doublage à une face ne se calcule pas en divisant les plaques d'une cloison et en conservant son ossature.",
+        "La laine acoustique de 45 mm du catalogue n'est pas une proposition d'isolation thermique d'un mur extérieur."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Doublage sur rails et montants Stil",
+          "url": "https://www.placo.fr/comment-isoler-un-mur-avec-un-doublage-sur-ossature-rails-et-montants-stil",
+          "checked_on": "2026-10-04",
+          "scope": "Sans reprise intermédiaire, simple parement à une face : M48 simples à 0,60 m limités à 2,10 m ; M48 doublés à 0,60 m limités à 2,50 m dans le système décrit."
+        },
+        {
+          "title": "ISOVER — Applications des laines de verre de 45 mm",
+          "url": "https://www.isover.fr/laine-de-verre/laine-de-verre-45mm",
+          "checked_on": "2026-10-04",
+          "scope": "La gamme PAR PHONIC 45 mm vise l'acoustique des cloisons résidentielles. L'épaisseur seule ne définit pas la performance d'un mur extérieur ni celle d'un ouvrage complet."
+        }
+      ]
+    },
+    {
+      "id": "lining_wet",
+      "project_type": "lining",
+      "room_type": "wet",
+      "status": "needs_information",
+      "required_fields": [
+        "room_usage",
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids"
+      ],
+      "questions": [
+        "S'agit-il de recouvrir un mur existant ou de créer une séparation à deux faces ?",
+        "Quel système fabricant de contre-cloison est retenu : montants simples ou doublés, entraxe, appuis intermédiaires ?",
+        "Quelles sont les longueurs et hauteurs de chaque pan, la nature du support et les ouvertures ?",
+        "L'objectif est-il décoratif, acoustique ou l'isolation thermique d'un mur extérieur ?",
+        "Le mur est-il dans une salle de bains privative, soumis à des projections, et quelle protection à l'eau est prévue ?"
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre.",
+        "Valider à la fois le système de doublage et la protection à l'humidité.",
+        "Aucun remplacement automatique des plaques standard par H1 ne suffit à valider la contre-cloison."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Doublage sur rails et montants Stil",
+          "url": "https://www.placo.fr/comment-isoler-un-mur-avec-un-doublage-sur-ossature-rails-et-montants-stil",
+          "checked_on": "2026-10-04",
+          "scope": "Sans reprise intermédiaire, simple parement à une face : M48 simples à 0,60 m limités à 2,10 m ; M48 doublés à 0,60 m limités à 2,50 m dans le système décrit."
+        },
+        {
+          "title": "Placo — Classement des locaux humides",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        }
+      ]
+    },
+    {
+      "id": "lining_unknown_room",
+      "project_type": "lining",
+      "room_type": "unknown",
+      "status": "needs_information",
+      "required_fields": [
+        "room_type",
+        "room_usage",
+        "wall_lengths_m",
+        "height_m",
+        "openings",
+        "margin_pct",
+        "framing_system",
+        "stud_spacing_m",
+        "wall_finish",
+        "product_ids"
+      ],
+      "questions": [
+        "S'agit-il de recouvrir un mur existant ou de créer une séparation à deux faces ?",
+        "Quel système fabricant de contre-cloison est retenu : montants simples ou doublés, entraxe, appuis intermédiaires ?",
+        "Quelles sont les longueurs et hauteurs de chaque pan, la nature du support et les ouvertures ?",
+        "L'objectif est-il décoratif, acoustique ou l'isolation thermique d'un mur extérieur ?"
+      ],
+      "limitations": [
+        "Le résultat est un métré et un budget partiel, sans attestation de conformité ni validation du support ou de l'assemblage.",
+        "Les prix sont un relevé daté ; disponibilité, magasin, livraison et prix d'achat doivent être revérifiés.",
+        "Plafond, ouvrage porteur, mur extérieur à dimensionner thermiquement, performance coupe-feu ou acoustique à garantir et charges lourdes sont hors périmètre."
+      ],
+      "sources": [
+        {
+          "title": "Placo — Doublage sur rails et montants Stil",
+          "url": "https://www.placo.fr/comment-isoler-un-mur-avec-un-doublage-sur-ossature-rails-et-montants-stil",
+          "checked_on": "2026-10-04",
+          "scope": "Sans reprise intermédiaire, simple parement à une face : M48 simples à 0,60 m limités à 2,10 m ; M48 doublés à 0,60 m limités à 2,50 m dans le système décrit."
+        },
+        {
+          "title": "Placo — Classement des locaux humides",
+          "url": "https://www.placo.fr/humidite-reglementation-et-classement-des-locaux-humides",
+          "checked_on": "2026-10-04",
+          "scope": "Pour parois verticales de locaux EB+ privatifs, plaque H1 côté exposé. Pieds, joints, traversées et protection des surfaces font partie du système. Le seul mot humide ne détermine pas la classe du local."
+        }
+      ]
+    }
+  ]
+}
