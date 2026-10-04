@@ -90,6 +90,21 @@ test('untrusted source URLs and non-HTML content are not parsed for prices', asy
   assert.equal(json.refresh.status, 'unsupported_content_type');
 });
 
+test('unused HTTP response bodies are cancelled before returning a snapshot fallback', async () => {
+  for (const spec of [{ status: 403, type: 'text/html', reason: 'http_error' },
+    { status: 200, type: 'application/json', reason: 'unsupported_content_type' },
+    { status: 200, type: 'text/html', length: '2097153', reason: 'page_too_large' }]) {
+    let cancelled = false;
+    const response = new Response(new ReadableStream({ cancel() { cancelled = true; } }), {
+      status: spec.status, headers: { 'Content-Type': spec.type, ...(spec.length ? { 'Content-Length': spec.length } : {}) },
+    });
+    const result = await refreshProduct(product, { fetchImpl: async () => response });
+    assert.equal(result.refresh.status, spec.reason);
+    assert.equal(cancelled, true);
+    assert.equal(result.price_status, 'snapshot');
+  }
+});
+
 test('refresh page size is bounded even without Content-Length', async () => {
   const oversized = await refreshProduct(product, { maxBytes: 20,
     fetchImpl: async () => new Response('x'.repeat(30), { headers: { 'Content-Type': 'text/html' } }) });

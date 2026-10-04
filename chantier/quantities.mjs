@@ -109,6 +109,10 @@ export function estimate(input, catalog, rulesDocument) {
   else if (!PROJECTS.includes(input.project_type)) return unsupported('Plafonds, ouvrages porteurs, double ossature et systèmes complexes ne sont pas dimensionnés.');
   if (absent(input.room_type) || input.room_type === 'unknown') missing.push('room_type');
   else if (!ROOMS.includes(input.room_type)) issues.push({ field: 'room_type', message: 'Valeur attendue : dry ou wet.' });
+  if (input.room_type === 'dry' && (
+    ['private_bathroom', 'public_wet_room', 'swimming_pool'].includes(input.room_usage)
+    || ['direct_shower_spray', 'shower_tray'].includes(input.water_exposure)
+  )) return invalid([{ field: 'room_type', message: 'Données contradictoires : un usage humide ou une exposition directe à l’eau ne peut pas être déclaré dry. Clarifier la pièce et son exposition avant chiffrage.' }]);
   if (input.room_type === 'wet') {
     if (absent(input.room_usage) || input.room_usage === 'unknown') missing.push('room_usage');
     else if (input.room_usage !== 'private_bathroom') return unsupported('Seule une salle de bains privative explicitement identifiée peut utiliser les règles humides de ce prototype.');

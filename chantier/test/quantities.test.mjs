@@ -120,6 +120,18 @@ test('wet use requires private context, water exposure and verified H1 board', (
     assert.equal(run({ ...wet, ...patch }).status, 'unsupported');
 });
 
+test('dry classification cannot bypass a conflicting wet usage or direct water exposure', () => {
+  const contradictions = [{ room_usage: 'private_bathroom' }, { room_usage: 'public_wet_room' },
+    { room_usage: 'swimming_pool' }, { water_exposure: 'direct_shower_spray' }, { water_exposure: 'shower_tray' }];
+  for (const base of [partition, tile]) for (const patch of contradictions) {
+    const result = run({ ...base, ...patch });
+    assert.equal(result.status, 'invalid_input', JSON.stringify(patch));
+    assert.equal(result.issues[0].field, 'room_type');
+    assert.equal(result.lines, undefined);
+  }
+  assert.equal(run({ ...partition, water_exposure: 'outside_direct_spray' }).status, 'ok', 'Absence of direct water exposure is not a contradiction with a dry room');
+});
+
 test('lining does not reuse a two-face partition frame', () => {
   const result = run({ ...partition, project_type: 'lining' });
   assert.equal(result.status, 'needs_information');

@@ -79,15 +79,16 @@ export async function refreshProduct(product, { fetchImpl = fetch, now = () => n
   if (!source) { result.refresh.status = 'source_not_allowlisted'; return result; }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(8000, Math.max(1, timeoutMs)));
+  const discard = async response => { try { await response.body?.cancel(); } catch { /* Preserve the explicit fallback reason. */ } };
   try {
     const response = await fetchImpl(source, { method: 'GET', redirect: 'error', signal: controller.signal,
       headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'Atelier-n8n-catalog-demo/1.0' } });
-    if (response.redirected || (response.url && response.url !== source)) { result.refresh.status = 'redirect_rejected'; return result; }
-    if (!response.ok) { result.refresh.status = 'http_error'; result.refresh.http_status = response.status; return result; }
-    if (!/^text\/html\b|^application\/xhtml\+xml\b/i.test(response.headers.get('content-type') ?? '')) { result.refresh.status = 'unsupported_content_type'; return result; }
+    if (response.redirected || (response.url && response.url !== source)) { await discard(response); result.refresh.status = 'redirect_rejected'; return result; }
+    if (!response.ok) { await discard(response); result.refresh.status = 'http_error'; result.refresh.http_status = response.status; return result; }
+    if (!/^text\/html\b|^application\/xhtml\+xml\b/i.test(response.headers.get('content-type') ?? '')) { await discard(response); result.refresh.status = 'unsupported_content_type'; return result; }
     const length = Number(response.headers.get('content-length'));
     const limit = Math.min(MAX_PRODUCT_PAGE, Math.max(1, maxBytes));
-    if (Number.isFinite(length) && length > limit) { await response.body?.cancel(); result.refresh.status = 'page_too_large'; return result; }
+    if (Number.isFinite(length) && length > limit) { await discard(response); result.refresh.status = 'page_too_large'; return result; }
     if (!response.body) { result.refresh.status = 'empty_page'; return result; }
     const reader = response.body.getReader();
     const chunks = []; let bytes = 0;
