@@ -1,5 +1,7 @@
 # Présenter l'Agent IA achats chantier
 
+**Scénario principal affiné :** [une salle de bains de 4 m sur 3 m avec une seule demande](DEMO-SALLE-DE-BAINS.md). Le mode `bathroom` calcule sol et doublage des quatre murs avec des hypothèses annoncées. Les exemples de cloison ci-dessous conservent leur intérêt pour expliquer les fonctions et les essais initiaux.
+
 Ce guide explique la conception du workflow et propose une démonstration d'entretien. Les exemples chiffrés ci-dessous sont **théoriques**, établis à partir du catalogue du 4 octobre 2026 et des formules du code. Ces valeurs ont aussi été obtenues lors des exécutions réelles 78 et 79. Les preuves et la portée des essais figurent dans [le rapport de validation](VALIDATION.md).
 
 ## Une phrase pour présenter le projet
@@ -73,13 +75,13 @@ La fonction `selectRules` de [quantities.mjs](../quantities.mjs) sélectionne un
 
 Pour la cloison simple retenue, les paramètres recommandés décrivent deux faces, une plaque par face et un gabarit M48/R48. Ils servent au métré estimatif. Ils ne certifient pas un assemblage multimarque ni sa pose.
 
-La salle de bains demande un usage privatif explicite et une zone hors projections directes. La classe H1 concerne les plaques ; elle ne valide pas une étanchéité complète. Le doublage conserve un statut demandant une validation de système : il n'est pas chiffré en réutilisant silencieusement l'ossature d'une cloison.
+Le scénario historique de cloison seule demande un usage privatif explicite et une zone hors projections directes. Le mode pièce entière propose une estimation provisoire et distingue la protection de la douche des matériaux de base. La classe H1 concerne les plaques ; elle ne valide pas une étanchéité complète. Le mode pièce entière possède désormais un gabarit de doublage distinct à une face et montants doublés. Un doublage isolé hors de ce gabarit conserve un statut demandant une validation de système : l’ossature d’une cloison n’est jamais réutilisée silencieusement.
 
 ### 6. Rechercher les matériaux
 
 **Rôle : retrouver des références dans le catalogue sélectionné.** Cet outil appelle `POST /tools/search` avec une recherche textuelle.
 
-Le service retire les accents pour comparer les mots, recherche dans les identifiants, noms, catégories et éventuels mots-clés, puis classe les correspondances. C'est une recherche lexicale dans **sept produits**, pas une navigation dans tout Leroy Merlin, une recherche globale du Web ou une recherche vectorielle.
+Le service retire les accents pour comparer les mots, recherche dans les identifiants, noms, catégories et éventuels mots-clés, puis classe les correspondances. C'est une recherche lexicale dans **un catalogue sélectionné de plusieurs fournisseurs**, pas une navigation dans tout Leroy Merlin, une recherche globale du Web ou une recherche vectorielle.
 
 Le résultat fournit les identifiants exacts, les noms, les dimensions, les conditionnements, les prix datés et leurs sources. L'agent doit réutiliser ces identifiants pour ses appels suivants. Il ne peut pas inventer une référence absente et attendre que le calculateur l'accepte.
 
@@ -101,7 +103,7 @@ Le code ne reconnaît un prix récent que s'il retrouve une identité de produit
 
 La fonction `estimate` de [quantities.mjs](../quantities.mjs) ne fait aucun appel au modèle. Elle contrôle les champs et unités, les références, leurs catégories, les paramètres d'ossature, la hauteur, les ouvertures et la marge. Pour une salle de bains, elle exige les paramètres d'usage et d'exposition, puis une plaque H1. Une finition carrelée ou lourde sort du système de cloison actuellement calculé.
 
-Elle renvoie soit des quantités, soit des questions, soit un motif de refus. Les montants d'achat proviennent du prix des conditionnements entiers et les sous-totaux monétaires sont calculés en centimes. Si un prix manque, le total complet reste inconnu : le prix absent n'est pas remplacé par zéro.
+Elle renvoie soit des quantités, soit des questions, soit un motif de refus. Le mode salle de bains combine sol et murs ; il distingue les valeurs fournies des hypothèses, et peut conserver le sol chiffré lorsque le système de murs est hors périmètre. Les montants d'achat proviennent du prix des conditionnements entiers et les sous-totaux monétaires sont calculés en centimes. Si un prix manque, le total complet reste inconnu : le prix absent n'est pas remplacé par zéro.
 
 La réponse contient aussi les hypothèses et les exclusions. L'agent doit les restituer de façon compréhensible ; un total partiel ne devient pas le prix de rénovation de toute la pièce.
 

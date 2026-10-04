@@ -19,27 +19,27 @@ bash chantier/start.sh
 
 Le fichier `Start-Agent-Chantier.command` lance la même commande. Docker doit fonctionner. Ces adresses sont locales à la machine qui exécute Docker.
 
-## Scénario d’entretien
+## Scénario d’entretien : une seule demande
 
-Dans le chat, envoyer :
+> Je refais ma salle de bains de 4 m sur 3 m.
 
-> Je crée une cloison non porteuse de 4 m de long et 2,50 m de haut dans une chambre sèche, sans porte ni fenêtre. Simple parement de chaque côté, finition peinte légère et isolation phonique. Marge de 10 %, budget de 500 euros pour les matériaux de ton catalogue. Propose les références et une estimation en indiquant les hypothèses à valider.
+La longueur et la largeur suffisent à une première estimation. L’agent consulte les règles, recherche les références, lit la fiche H1 puis appelle le calculateur. Il annonce les paramètres proposés : hauteur 2,50 m, marge 10 %, doublage des quatre murs, finition légère et isolation. Portes, fenêtres et receveur non mesurés ne sont pas déduits : ce sont des surfaces brutes, pas une affirmation qu’ils n’existent pas.
 
-Puis, **dans la même conversation** :
+Le résultat contient le sol carrelé et les matériaux principaux des murs, puis une question courte pour affiner. Le budget est facultatif. Les quantités de la pièce sont calculées dans le code à partir des dimensions ; le modèle ne remplit pas discrètement les valeurs absentes.
 
-> Finalement, cette même cloison est pour une salle de bains privative, hors projection directe d’eau. La finition reste peinte. Garde les dimensions, l’isolation et la marge. Mon budget passe à 800 euros. Reprends les plaques et recalcule l’estimation.
+Attendre la réponse. Dans **la même conversation**, essayer :
 
-Montrer dans n8n les appels d’outils de l’exécution. La preuve de l’agent est son choix d’outils et sa réutilisation de leurs résultats. La mémoire conserve les dimensions entre les deux messages. Le calculateur doit être rappelé pour la nouvelle estimation.
+> Il y aura une douche avec un receveur. Garde les dimensions.
 
-Autre exemple très simple :
+L’agent conserve le chiffrage provisoire des lots calculables et distingue les protections à l’eau, le receveur et les autres postes non chiffrés. Il ne refuse pas toute la rénovation parce qu’une douche est présente.
 
-> Je veux carreler 20 m² au sol dans un salon intérieur sec, en gris, avec 10 % de marge et 350 euros pour les carreaux seuls. Choisis une référence du catalogue et calcule les cartons à acheter.
+Puis :
 
-Exemple volontairement incomplet :
+> En fait, la hauteur sous plafond est de 2,70 m.
 
-> Je veux refaire une pièce en placo.
+Le moteur recalcule la surface des murs, conserve le sol et indique qu’un autre système de doublage doit être choisi. Il ne présente pas le prix du sol comme celui de toute la pièce.
 
-L’agent doit poser des questions, notamment cloison, doublage ou plafond. Il ne doit pas inventer la géométrie.
+Voir le [conducteur de démonstration salle de bains](docs/DEMO-SALLE-DE-BAINS.md). Les scénarios historiques de cloison et de carrelage seul restent expliqués dans le [guide nœud par nœud](docs/GUIDE-ENTRETIEN.md).
 
 ## Architecture et fichiers
 
@@ -57,12 +57,13 @@ Chat → AI Agent → réponse dans le chat
 - `workflow.json` : export public des huit nœuds et de deux notes. Aucune clé ni référence privée de connexion.
 - `build-workflow.mjs` : construit l’export et sa copie locale avec la connexion n8n.
 - `agent-prompt.txt` : rôle, questions, choix des outils et présentation des résultats.
-- `catalog.json` : sept produits sourcés, prix du conditionnement entier, dimensions et date du relevé.
+- `catalog.json` : produits de plusieurs fournisseurs, sourcés, prix du conditionnement entier, dimensions et date du relevé.
 - `rules.json` : périmètre, questions, hypothèses et sources fabricants.
 - `server.mjs` : expose les quatre outils, valide les requêtes et encadre les lectures des fiches fournisseurs.
 - `quantities.mjs` : calculs déterministes, arrondis des conditionnements et totaux monétaires.
 - `test/` : tests de calcul et du service, sans appel à OpenAI.
-- `test-agent.mjs` : quatre tours réels de conversation, lancés explicitement avec `--run`.
+- `test-agent.mjs` : quatre tours historiques de conversation, lancés explicitement avec `--run`.
+- `test-agent-room.mjs` : salle de bains depuis les seules dimensions, puis douche et changement de hauteur dans la même session.
 - `extract-execution.mjs` : lecture seule des traces n8n, limitée au nouveau workflow et aux sessions de test fictives.
 
 Le modèle est appelé par le nœud natif n8n. Le service d’outils ne reçoit aucune clé OpenAI. La connexion native est chiffrée dans le stockage n8n. La mémoire est limitée à huit échanges et reste en mémoire : elle n’est pas une base de données métier durable.
@@ -83,24 +84,24 @@ Pour importer ailleurs : lancer le service `chantier-api` sur le réseau Docker 
 
 ```sh
 node --test chantier/test/*.test.mjs
-node chantier/test-agent.mjs --dry-run
+node chantier/test-agent-room.mjs --dry-run
 # Appels OpenAI réels, facturables sur la connexion existante :
-node chantier/test-agent.mjs --run
+node chantier/test-agent-room.mjs --run
 ```
 
 Les tests réels enregistrent réponses et appels d’outils sous `work/chantier-validation/`, ignoré par Git. Ils vérifient le choix des outils, les données transmises, les prix et totaux du calculateur. Ils ne certifient pas la conformité d’un ouvrage.
 
 ## État vérifié le 4 octobre 2026
 
-Workflow publié et conversation testée dans n8n : **27 tests de code et 4/4 tours réels réussis**, puis deux essais dans le chat de l’éditeur. Le second essai utilise les quatre outils. Voir [le rapport de validation et les captures](docs/VALIDATION.md).
+La campagne initiale est conservée dans [le rapport de validation](docs/VALIDATION.md). Le conducteur de salle de bains distingue la conception du nouveau parcours et les résultats réellement observés après installation.
 
 ## Limites à expliquer honnêtement
 
-La recherche porte sur une **sélection de sept références Leroy Merlin**, avec prix relevés le 4 octobre 2026. Elle ne parcourt pas tout le site. La consultation d’une fiche peut tenter de relire la page : blocage, échec ou unité de prix ambiguë restent signalés. Le calculateur utilise toujours les prix du catalogue daté ; un éventuel prix en ligne est présenté séparément. Aucun stock en magasin n’est vérifié.
+La recherche porte sur une **sélection de références de plusieurs fournisseurs**, avec prix datés. Chaque référence conserve son enseigne ; un prix conseillé est distingué d’un prix de vente affiché. Elle ne parcourt pas tout le site. La consultation d’une fiche peut tenter de relire la page : blocage, échec ou unité de prix ambiguë restent signalés. Le calculateur utilise toujours les prix du catalogue daté ; un éventuel prix en ligne est présenté séparément. Aucun stock en magasin n’est vérifié.
 
-Le calcul placo couvre une cloison intérieure simple non porteuse, de hauteur au plus 2,50 m, à finition légère, selon les hypothèses renvoyées par les règles. Le catalogue multimarque ne constitue pas un système fabricant certifié. Le doublage est reconnu et documenté, mais **son ossature n’est pas chiffrée dans cette version**. Plafonds, systèmes complexes, carrelage mural lourd, performance feu, calcul thermique et garantie acoustique sont exclus.
+Le calcul placo couvre une cloison intérieure simple non porteuse, de hauteur au plus 2,50 m, à finition légère, selon les hypothèses renvoyées par les règles. Le catalogue multimarque ne constitue pas un système fabricant certifié. Le mode `bathroom` ajoute le doublage des quatre murs selon un gabarit Placo distinct, à montants doublés et hauteur au plus 2,50 m. Le doublage isolé sans ce gabarit reste à préciser. Plafonds, systèmes complexes, carrelage mural lourd, performance feu, calcul thermique et garantie acoustique sont exclus.
 
-En salle de bains privative hors projections directes, les plaques H1 sont proposées avec leurs limites. Une plaque hydrofuge ne remplace pas la protection à l’eau complète. La V1 utilise une seule référence de plaque pour les deux faces : retenir deux faces H1 est un choix conservateur, pas une obligation universelle.
+Pour la pièce complète, une face H1 est comptée par mur doublé. Les matériaux de base ne valident pas la protection à l’eau d’une douche ; ce poste reste distinct. Pour le scénario historique de cloison à deux faces, le choix H1 sur les deux faces reste une hypothèse conservatrice, pas une obligation universelle.
 
 Le total reste partiel : vis, bandes, enduits, fixations, protections à l’eau, colle, joints, outillage, livraison et main-d’œuvre ne sont pas tous chiffrés. L’agent prépare une liste à vérifier, sans commande ni paiement.
 
