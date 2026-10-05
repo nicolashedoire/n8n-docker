@@ -419,7 +419,7 @@ Pour étendre le projet, il faut ajouter un système documenté, ses produits co
 2. **Dans Consulter les règles** : « Une politique documentée définit les projets couverts. Pour cette pièce, les hypothèses sont annoncées : 2,50 m de hauteur, 10 % de marge, doublage H1 à une face. »
 3. **Dans le résultat du calcul** : « Mon code calcule 12 m² au sol et 35 m² de murs. Il utilise les conditionnements réels : 13 cartons, 26 plaques, 14 rails, 62 montants et 5 lots d’isolant. Les montants sont doublés parce que le gabarit de doublage le prévoit. »
 4. **Dans les prix** : « Les coûts viennent du catalogue daté et sont additionnés en centimes. Le total de 1 316,41 € concerne uniquement ces matériaux. Une donnée manquante reste inconnue. »
-5. **Avec la hauteur 2,70 m** : « Le calcul conserve cette correction et refuse le lot hors périmètre. Il rend le sol et un total partiel explicite, puis l’agent explique la suite. »
+5. **Avec la hauteur 2,70 m** : « Le calcul conserve cette correction et refuse le lot hors périmètre. Il rend le sol et un sous-total connu explicite, puis l’agent explique la suite. »
 
 Phrase de conclusion pour l’entretien : « L’autonomie de l’agent est dans le choix des outils et le dialogue. Les décisions de périmètre et les calculs restent traçables, reproductibles et testables. »
 
@@ -447,3 +447,5 @@ console.log(result.lines.map(({ name, packs, total_eur }) => ({ name, packs, tot
 La sortie attendue commence par `ok 1316.41`. Pour examiner le cas partiel, ajoute `height_m: 2.7` et affiche aussi `known_subtotal_eur` et `components.walls`.
 
 Les tests existants sont dans [bathroom.test.mjs](../test/bathroom.test.mjs), [quantities.test.mjs](../test/quantities.test.mjs) et [server.test.mjs](../test/server.test.mjs). Ils distinguent les tests de règles/calculs des essais de conversation. Ce guide a été contrôlé par des appels ciblés aux fonctions ; il ne prétend pas qu’une nouvelle campagne complète de tests ou une nouvelle démo du modèle a été exécutée pour cette mise à jour documentaire.
+
+Pour le trajet HTTP, les quatre outils, les contrats JSON et les incidents techniques, poursuivre avec [API-CHANTIER.md](API-CHANTIER.md).

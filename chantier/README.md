@@ -7,6 +7,8 @@ Ce projet est autonome dans `chantier/`, sur la branche `feat/agent-achats-chant
 ## Ouvrir la démonstration installée
 
 - [Guide actuel dans Notion : salle de bains, code et incidents](https://app.notion.com/p/3efce9b72fb781bfade7c9a625be4ab0)
+- [Dans Notion : l’API expliquée](https://app.notion.com/p/3f0ce9b72fb781bc9c40f2be09247d64)
+- [Dans Notion : règles métier et fonctions de calcul](https://app.notion.com/p/3f0ce9b72fb7817798dbc420ba33a3b9)
 - [Dossier BTP dans Notion et historique de conception](https://app.notion.com/p/3efce9b72fb78126ac58dabefbad8d47)
 - [Workflow dans n8n](http://localhost:5678/workflow/atelierAgentChantier01)
 - [Conversation avec l’agent](http://localhost:5678/webhook/atelier-agent-chantier/chat)
