@@ -6,6 +6,19 @@ Préparation du **5 octobre 2026** pour l’entretien IALTER du **mardi 6 octobr
 
 L’objectif n’est pas de réciter tous les champs. Il faut montrer que tu sais ce qui entre dans chaque brique, ce qui en sort, pourquoi elle existe et ce qui se passe lorsqu’elle échoue.
 
+## Approfondir l’API, les règles métier et les calculs
+
+Deux compléments expliquent le code derrière les briques n8n :
+
+- [L’API expliquée : appels, données, réponses et incidents](API-CHANTIER.md). À lire en ouvrant les quatre outils HTTP dans n8n : ce qu’ils envoient, ce qu’ils reçoivent et comment interpréter une réponse.
+- [Les règles métier et les fonctions de calcul](REGLES-ET-CALCULS.md). À lire avec la sortie du nœud « Calculer les quantités » : hypothèses, contrôles, formules, conditionnements et exemple complet de la salle de bains 4 × 3 m.
+
+**La différence à expliquer :** une règle métier décide si et dans quelles conditions on peut chiffrer un poste. Une fonction de calcul transforme ensuite des données valides en quantités. L’API permet à l’agent n8n d’appeler ces fonctions avec du JSON et de récupérer leur résultat.
+
+> « OpenAI aide l’agent à comprendre la demande et à choisir ses outils. Mon API métier contient les règles et les calculs. Pour une salle de bains de 4 mètres sur 3, le code calcule 12 m² de sol. Il applique la marge annoncée, puis arrondit au carton entier. Je peux donc expliquer et vérifier le nombre de cartons sans demander au modèle de refaire le calcul. »
+
+Pendant l’entretien, suis une seule demande : **message → arguments de l’outil → contrôles métier → calcul → résultat JSON → réponse et PDF**. Les deux guides détaillent ensuite les variantes et les erreurs si l’intervieweur te pose des questions.
+
 ## Ton introduction, prête à dire
 
 > « J’ai préparé un agent d’aide à l’achat de matériaux pour un chantier. L’utilisateur commence avec une phrase très courte : “Je refais ma salle de bains de 4 m sur 3 m.” L’agent propose une première liste, précise ses hypothèses et produit une étude PDF.

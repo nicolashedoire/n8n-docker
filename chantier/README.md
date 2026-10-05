@@ -42,6 +42,8 @@ Le moteur recalcule la surface des murs, conserve le sol et indique qu’un autr
 
 Pour le partage d’écran, commencer par [présenter la configuration des neuf briques](docs/PRESENTER-CONFIGURATION.md) : captures réelles des paramètres, phrases à dire, code expliqué et déroulé de quinze minutes. Voir aussi le [conducteur de démonstration salle de bains](docs/DEMO-SALLE-DE-BAINS.md). Les scénarios historiques de cloison et de carrelage seul restent expliqués dans le [guide nœud par nœud](docs/GUIDE-ENTRETIEN.md).
 
+Pour les questions techniques de l’entretien, voir [l’API expliquée](docs/API-CHANTIER.md) et [les règles métier et fonctions de calcul](docs/REGLES-ET-CALCULS.md). Ces deux guides décrivent les contrats JSON, les contrôles réellement codés et les formules de l’exemple 4 × 3 m.
+
 ## Récupérer l’étude en PDF
 
 Après une estimation, cliquer sur **Télécharger l’étude PDF** dans le chat. Le document de trois pages pour le scénario salle de bains reprend les mesures, hypothèses, matériaux, prix et sources du calculateur. Une modification produit un nouveau rapport ; les précédents restent inchangés. Les fichiers restent sur le Mac dans `local-files/chantier-reports/` et ne sont pas commités. Le lien local n’est pas un lien de partage public.
