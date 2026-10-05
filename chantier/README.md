@@ -40,7 +40,7 @@ Puis :
 
 Le moteur recalcule la surface des murs, conserve le sol et indique qu’un autre système de doublage doit être choisi. Il ne présente pas le prix du sol comme celui de toute la pièce.
 
-Voir le [conducteur de démonstration salle de bains](docs/DEMO-SALLE-DE-BAINS.md). Les scénarios historiques de cloison et de carrelage seul restent expliqués dans le [guide nœud par nœud](docs/GUIDE-ENTRETIEN.md).
+Pour le partage d’écran, commencer par [présenter la configuration des neuf briques](docs/PRESENTER-CONFIGURATION.md) : captures réelles des paramètres, phrases à dire, code expliqué et déroulé de quinze minutes. Voir aussi le [conducteur de démonstration salle de bains](docs/DEMO-SALLE-DE-BAINS.md). Les scénarios historiques de cloison et de carrelage seul restent expliqués dans le [guide nœud par nœud](docs/GUIDE-ENTRETIEN.md).
 
 ## Récupérer l’étude en PDF
 
