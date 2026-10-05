@@ -1,0 +1,13 @@
+00:00 — Le problème métier et le vrai rôle de l’agent
+00:54 — 1 · Décrire mon chantier
+01:48 — 2 · Agent achats chantier : les instructions
+02:34 — 2 · Agent achats chantier : les garde-fous
+03:21 — 3 · Modèle OpenAI
+04:12 — 4 · Mémoire de la conversation
+05:07 — 5 · Consulter les règles
+05:54 — 6 · Rechercher les matériaux
+06:47 — 7 · Consulter une fiche fournisseur
+07:38 — 8 · Calculer les quantités
+08:43 — Le PDF vient des données calculées
+09:35 — 9 · Expliquer l’incident
+10:30 — Votre démonstration en entretien
