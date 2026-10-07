@@ -6,6 +6,8 @@ Il s’agit de scraping HTML déterministe, et non d’un agent IA : les étapes
 
 [Ouvrir le workflow local dans n8n](http://localhost:5678/workflow/atelierLinkedinVeille01) · [Fichier à importer](workflows/linkedin-veille.json)
 
+[Guide illustré dans Notion — page privée](https://app.notion.com/p/3f2ce9b72fb781bda7faf79ed11bb437)
+
 ![Les huit étapes après une collecte réussie](images/workflow.png)
 
 **Vérifié le 7 octobre 2026 à 08 h 24 (Paris)** : exécution n8n 94 réussie en 2,027 s, 60 cartes extraites de la page reçue et 10 annonces distinctes dans le CSV téléchargé (1 914 octets). Les 13 tests automatisés passent. Ce constat décrit cet essai ; la disponibilité et les résultats de LinkedIn peuvent changer.
