@@ -160,7 +160,7 @@
       "id": "6910ced9794a172e9d5f600776f6069e",
       "name": "6 · Lire les annonces",
       "type": "n8n-nodes-base.html",
-      "typeVersion": 1.2,
+      "typeVersion": 1.1,
       "position": [
         1150,
         300

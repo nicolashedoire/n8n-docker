@@ -26,3 +26,13 @@ C'est un scraping déterministe, pas un agent IA. La recherche est effectuée pa
 ## Validation prévue
 
 Tests des liens, doublons, champs manquants, cellules CSV et erreurs HTTP ; exécution réelle dans l'éditeur n8n ; inspection du CSV. L'HTML collecté et les sorties d'exécution restent dans les dossiers locaux ignorés par Git.
+
+## Étape 2 — Construction et tests
+
+Huit nœuds natifs, plus deux notes sur le canvas. Les fonctions `verifyPage` et `prepareJobs` sont testables isolément puis intégrées directement dans les nœuds Code. Les 13 tests couvrent les refus HTTP, pages inattendues, absence de cartes, doublons, liens trompeurs, dates, cellules de tableur et plafond d'export.
+
+## Étape 3 — Exécution réelle et correction
+
+Le premier essai n8n (exécution 93) a parcouru l'ensemble du workflow. L'inspection a révélé que HTML v1.2 ajoutait les adresses des liens aux noms d'entreprises. Le nœud de lecture des champs a été configuré en v1.1, qui utilise le texte brut.
+
+Nouvel essai le 7 octobre 2026 à 08 h 24 (Paris), n8n 2.39.8, exécution **94** : succès en **2,027 secondes**, **60** cartes lues et **10** annonces uniques exportées. Le CSV de **1 914 octets** a été téléchargé depuis le nœud final et contrôlé : neuf colonnes, dix lignes, URL uniques sans suivi et noms d'entreprises propres. Les captures du workflow et de l'export sont dans le guide. Les données complètes collectées restent locales.

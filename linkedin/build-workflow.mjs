@@ -43,7 +43,8 @@ const nodes = [
     extractionValues: { values: [{ key: 'cards', cssSelector: '.jobs-search__results-list .base-search-card', returnValue: 'html', returnArray: true }] },
     options: { trimValues: true, cleanUpText: true },
   }, { alwaysOutputData: true }),
-  node(names[5], 'n8n-nodes-base.html', 1.2, [1150, 300], {
+  // v1.1 renvoie le texte brut, sans ajouter les URL des liens au nom d'entreprise.
+  node(names[5], 'n8n-nodes-base.html', 1.1, [1150, 300], {
     operation: 'extractHtmlContent', sourceData: 'json', dataPropertyName: 'cards',
     extractionValues: { values: fields }, options: { trimValues: true, cleanUpText: true },
   }, { alwaysOutputData: true, notes: 'HTML accepte directement un tableau de fragments : il crée un item par carte. Les cinq champs restent rattachés à leur annonce.', notesInFlow: false }),
