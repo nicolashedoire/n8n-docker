@@ -1,0 +1,373 @@
+{
+  "id": "atelierLinkedinVeille01",
+  "name": "L’Atelier · LinkedIn public → CSV",
+  "active": false,
+  "nodes": [
+    {
+      "id": "bdc13c9cc3640b2c73f71bcba9c8e028",
+      "name": "1 · Lancer la veille",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2172992b6f329c140071982adf63a066",
+      "name": "2 · Choisir la recherche",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        230,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "32d5cbf44297a32d72cdd3c81f162767",
+              "name": "keywords",
+              "value": "n8n",
+              "type": "string"
+            },
+            {
+              "id": "79a311d54fdd601bcfec5d24ac80753c",
+              "name": "location",
+              "value": "France",
+              "type": "string"
+            },
+            {
+              "id": "3e6f15d42dfd26333b24bdc8d28a00fa",
+              "name": "max_results",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "003c2f2dccc7c0d87ff0f9a7b7392b69",
+              "name": "priority_terms",
+              "value": "n8n, automatisation, automation, IA",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "notes": "Changer ici la recherche. 10 = plafond de lignes exportées, pas nombre de pages. Les mots prioritaires servent uniquement au tri dans le titre.",
+      "notesInFlow": false
+    },
+    {
+      "id": "35b5b1f7877a85f36d1541cb4e607931",
+      "name": "3 · Télécharger LinkedIn",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.linkedin.com/jobs/search/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $json.keywords }}"
+            },
+            {
+              "name": "location",
+              "value": "={{ $json.location }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/html"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "retryOnFail": false,
+      "notes": "Une requête anonyme, sans cookies ni clé. Les codes HTTP sont examinés au nœud suivant. Une panne réseau arrête ce nœud.",
+      "notesInFlow": false
+    },
+    {
+      "id": "142874b03b6e7b0b76bdde0c89fb9bdd",
+      "name": "4 · Vérifier la page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        690,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function verifyPage(response) {\n  const status = Number(response.statusCode);\n  if (status === 429) throw new Error('LINKEDIN_429 : collecte limitée par le site. Arrêter et réessayer plus tard, sans relance automatique.');\n  if ([401, 403, 999].includes(status)) throw new Error(`LINKEDIN_${status} : accès public refusé. Aucun contournement ni export de résultats.`);\n  if (status >= 300 && status < 400) throw new Error(`LINKEDIN_REDIRECTION_${status} : la page publique redirige. Vérifier manuellement la source.`);\n  if (status !== 200) throw new Error(`LINKEDIN_HTTP_${status || 'INCONNU'} : la collecte n'a pas abouti.`);\n  const html = response.body ?? response.data;\n  const contentType = String(response.headers?.['content-type'] || '');\n  if (typeof html !== 'string' || (contentType && !/text\\/html/i.test(contentType))) {\n    throw new Error('LINKEDIN_FORMAT : une page HTML était attendue.');\n  }\n  // Ne pas confondre un simple lien « Sign in » du site avec un mur de connexion.\n  const hasList = /<ul\\b[^>]*class=[\"'][^\"']*\\bjobs-search__results-list\\b/i.test(html);\n  const hasCard = /<div\\b[^>]*class=[\"'][^\"']*\\bbase-search-card\\b/i.test(html);\n  if (!hasList || !hasCard) {\n    throw new Error('LINKEDIN_SANS_CARTES : aucune annonce exploitable détectée. Recherche vide, page de connexion ou structure modifiée : contrôler la réponse HTTP.');\n  }\n  return { html, collected_at: new Date().toISOString(), http_status: status };\n}\nreturn [{json: verifyPage($input.first().json)}];"
+      }
+    },
+    {
+      "id": "f45b747f51492fb3c0325ec20632e553",
+      "name": "5 · Extraire les cartes",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        300
+      ],
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "json",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "cards",
+              "cssSelector": ".jobs-search__results-list .base-search-card",
+              "returnValue": "html",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "6910ced9794a172e9d5f600776f6069e",
+      "name": "6 · Lire les annonces",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1150,
+        300
+      ],
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "json",
+        "dataPropertyName": "cards",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": ".base-search-card__title",
+              "returnValue": "text",
+              "returnArray": false
+            },
+            {
+              "key": "company",
+              "cssSelector": ".base-search-card__subtitle",
+              "returnValue": "text",
+              "returnArray": false
+            },
+            {
+              "key": "location",
+              "cssSelector": ".job-search-card__location",
+              "returnValue": "text",
+              "returnArray": false
+            },
+            {
+              "key": "url",
+              "cssSelector": "a.base-card__full-link",
+              "returnValue": "attribute",
+              "returnArray": false,
+              "attribute": "href"
+            },
+            {
+              "key": "published_at",
+              "cssSelector": "time[datetime]",
+              "returnValue": "attribute",
+              "returnArray": false,
+              "attribute": "datetime"
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "alwaysOutputData": true,
+      "notes": "HTML accepte directement un tableau de fragments : il crée un item par carte. Les cinq champs restent rattachés à leur annonce.",
+      "notesInFlow": false
+    },
+    {
+      "id": "76143cf180babb68b1e77793fc9abb2c",
+      "name": "7 · Préparer le tableau",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function prepareJobs(rows, config = {}, collectedAt) {\n  function fail(code, message) {\n    const error = new Error(message);\n    error.code = code;\n    throw error;\n  }\n\n  function clean(value) {\n    return typeof value === 'string'\n      ? value.replace(/[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]/g, '').replace(/\\s+/g, ' ').trim()\n      : '';\n  }\n\n  // A CSV writer quotes delimiters; this additionally prevents spreadsheet\n  // software interpreting untrusted text as a formula when the CSV is opened.\n  function spreadsheetText(value) {\n    const text = clean(value);\n    return /^[=+@-]/.test(text) ? `'${text}` : text;\n  }\n\n  function tokens(value) {\n    return clean(value).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();\n  }\n\n  function canonicalJob(value) {\n    if (typeof value !== 'string' || value.length > 2048) return null;\n    // Accept only HTTPS LinkedIn job detail links (bare ID or title-ID).\n    // Reject credentials, other domains, ports and non-job paths, discard tracking.\n    const match = value.trim().match(/^https:\\/\\/(?:(?:www|[a-z]{2})\\.)?linkedin\\.com\\/jobs\\/view\\/(?:[^\\s/?#]*-)?([0-9]{5,20})\\/?(?:[?#][^\\s]*)?$/i);\n    if (!match) return null;\n    return { id: match[1], url: `https://www.linkedin.com/jobs/view/${match[1]}/` };\n  }\n\n  function publicationDate(value) {\n    const text = clean(value);\n    if (!/^\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2}))?$/.test(text)) return '';\n    const day = text.slice(0, 10);\n    const date = new Date(`${day}T00:00:00.000Z`);\n    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== day) return '';\n    if (text.length > 10 && !Number.isFinite(Date.parse(text))) return '';\n    return day;\n  }\n\n  if (!Array.isArray(rows)) fail('INVALID_ROWS', 'Les annonces extraites doivent être un tableau.');\n  if (!config || typeof config !== 'object' || Array.isArray(config)) config = {};\n  const collectionDate = typeof collectedAt === 'string' ? new Date(collectedAt) : null;\n  if (!collectionDate || !Number.isFinite(collectionDate.getTime())) {\n    fail('INVALID_COLLECTION_DATE', 'La date de collecte doit être fournie et valide.');\n  }\n  const collectionStamp = collectionDate.toISOString();\n  const requestedMax = Number(config.max_results);\n  const maxResults = Number.isFinite(requestedMax) && config.max_results !== '' && config.max_results != null\n    ? Math.min(25, Math.max(1, Math.floor(requestedMax))) : 10;\n  const priorities = [];\n  const seenTerms = new Set();\n  for (const rawTerm of clean(config.priority_terms).split(',')) {\n    const term = tokens(rawTerm);\n    if (!term || seenTerms.has(term)) continue;\n    seenTerms.add(term);\n    priorities.push({ term, label: clean(rawTerm) });\n  }\n  const search = [clean(config.keywords), clean(config.location)].filter(Boolean).join(' — ');\n  const seenJobs = new Set();\n  const prepared = [];\n  for (const row of rows) {\n    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;\n    const title = clean(row.title);\n    const job = canonicalJob(row.url);\n    if (!title || !job || seenJobs.has(job.id)) continue;\n    seenJobs.add(job.id);\n    const titleTokens = ` ${tokens(title)} `;\n    const matches = priorities.filter(({ term }) => titleTokens.includes(` ${term} `));\n    prepared.push({\n      titre: spreadsheetText(title),\n      entreprise: spreadsheetText(row.company),\n      lieu: spreadsheetText(row.location),\n      date_publication: publicationDate(row.published_at),\n      url: job.url,\n      mots_cles_reperes: spreadsheetText(matches.map(({ label }) => label).join(', ')),\n      score_indicatif: matches.length,\n      collecte_le: collectionStamp,\n      recherche: spreadsheetText(search),\n    });\n  }\n  if (!prepared.length) {\n    fail('NO_USABLE_JOBS', 'Aucune annonce exploitable : titre et lien LinkedIn valides requis. Vérifiez la page reçue et les sélecteurs HTML.');\n  }\n  // Stable sort preserves source order for equal scores. This score counts\n  // title keywords only; it is not an assessment of candidate suitability.\n  return prepared.sort((a, b) => b.score_indicatif - a.score_indicatif).slice(0, maxResults);\n}\nconst config = $('2 · Choisir la recherche').first().json;\nconst timestamp = $('4 · Vérifier la page').first().json.collected_at;\nreturn prepareJobs($input.all().map(item => item.json), config, timestamp).map(json => ({ json }));"
+      },
+      "notes": "Table consultable dans Output > Table. Le score compte les mots prioritaires présents dans le titre : il ne juge pas la pertinence du poste pour une personne.",
+      "notesInFlow": false
+    },
+    {
+      "id": "c8294755444bfac4e13de8872b9c87a0",
+      "name": "8 · Télécharger le CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1610,
+        300
+      ],
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ 'veille-linkedin-' + $now.toFormat('yyyy-MM-dd-HHmm') + '.csv' }}",
+          "headerRow": true,
+          "delimiter": ";"
+        }
+      }
+    },
+    {
+      "id": "8ede686f48582b6473a5a375c3d89bc7",
+      "name": "Comprendre la collecte",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -50,
+        40
+      ],
+      "parameters": {
+        "content": "## 1. Collecter une page publique\nModifier les critères dans **2**, puis lancer le workflow. Une seule requête, 15 s maximum, sans relance.\n\nEn cas de refus HTTP, de connexion imposée ou de structure inconnue, la collecte s’arrête avec un message explicite.",
+        "height": 200,
+        "width": 875,
+        "color": 5
+      }
+    },
+    {
+      "id": "b8ebf14ed3df7ecbc1c96c9bd221f409",
+      "name": "Comprendre le résultat",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        40
+      ],
+      "parameters": {
+        "content": "## 2. Transformer et télécharger\nLes nœuds **5 et 6** extraient les cartes puis leurs champs par sélecteurs CSS. **7** nettoie, dédoublonne et trie : ouvrir sa table de sortie. **8** fournit le CSV via Download.\n\nScraping déterministe, sans IA. Première page seulement ; le tri regarde les titres, pas les descriptifs complets.",
+        "height": 200,
+        "width": 890,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "1 · Lancer la veille": {
+      "main": [
+        [
+          {
+            "node": "2 · Choisir la recherche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 · Choisir la recherche": {
+      "main": [
+        [
+          {
+            "node": "3 · Télécharger LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 · Télécharger LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "4 · Vérifier la page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4 · Vérifier la page": {
+      "main": [
+        [
+          {
+            "node": "5 · Extraire les cartes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 · Extraire les cartes": {
+      "main": [
+        [
+          {
+            "node": "6 · Lire les annonces",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6 · Lire les annonces": {
+      "main": [
+        [
+          {
+            "node": "7 · Préparer le tableau",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7 · Préparer le tableau": {
+      "main": [
+        [
+          {
+            "node": "8 · Télécharger le CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "executionTimeout": 60
+  }
+}
